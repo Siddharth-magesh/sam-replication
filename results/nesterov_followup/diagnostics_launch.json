@@ -1,0 +1,8 @@
+{
+  "status": "complete",
+  "manifest": {
+    "worker_sha256": "a22741366aeb765807fece84d23be9a5d90f4b2ef6b4a1400cc307adba2c6bd4",
+    "config_sha256": "d3584c0143a0f66bfe2a7108290d5bd60bd78697efdec1460ac0cb6802b1d45a"
+  },
+  "phase": "diagnostics"
+}

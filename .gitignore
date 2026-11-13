@@ -1,1 +1,15 @@
 **/BUILD
+
+# Generated local artifacts (curated results and executed notebooks are intentional).
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+repro_notebooks/work/
+repro_notebooks/runs/
+repro_notebooks/new_runs/
+repro_notebooks/debug_bundle*/
+repro_notebooks/numerical_probe_bundle/
+*.zip
+*.msgpack
+*.tfrecord*
+events.out.tfevents.*

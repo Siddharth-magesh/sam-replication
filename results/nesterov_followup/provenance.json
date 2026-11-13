@@ -1,0 +1,10 @@
+{
+  "notebook": "03_cifar10_resnet18_nesterov_followup.ipynb",
+  "notebook_sha256": "724b3ab459021098292dcf6c28e467f8f0dcb3f7eff6df6c5c3a7055d6286655",
+  "worker_sha256": "a22741366aeb765807fece84d23be9a5d90f4b2ef6b4a1400cc307adba2c6bd4",
+  "source_run": "debug_bundle (1)",
+  "worker_location": "Embedded WORKER_SOURCE in notebook; verified identical to executed experiment.py",
+  "outputs_preserved_byte_for_byte": true,
+  "all_three_methods_completed_epochs": 10,
+  "note": "Optional numerical probe interrupted; main diagnostics, benchmark and pilot complete. Skip optional section 4B when rerunning."
+}
