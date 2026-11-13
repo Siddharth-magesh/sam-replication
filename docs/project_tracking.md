@@ -107,6 +107,7 @@ One full comparison (SAM, SGD-200, SGD-400) is roughly 12 to 16 A100-hours. The 
 | 8 | Write and submit the one-page check-in summary (claim, key experiments, draft hypothesis, code status) | TBD | Oct 29 | Not started |
 | 9 | If H1: design the m = 32 emulation patch (8 chunks per batch) | TBD | Nov 3 | Not started |
 | 10 | Full report draft for the Nov 20 review | All | Nov 18 | Not started |
+| 11 | ResNet-18 / batch-128 SGD, SAM and FGSM timing notebook and optional 10-epoch pilot | Code lead | Nov 13 | Complete: both executed notebooks verified; ordinary momentum SGD/SAM/FGSM 89.24/87.82/79.12%, Nesterov 89.70/88.28/80.06% final validation accuracy |
 
 Owners marked TBD should be filled in at the next meeting. Each task should have exactly one owner, even if several people help.
 
@@ -126,8 +127,27 @@ The report is 4 pages excluding references and appendix, in a standard conferenc
 
 ## 12. Changelog
 
+- **2026-11-13**: Verified both final Colab runs and worker/config hashes; renamed executed notebooks with outputs intact, curated results, and removed superseded generated work. Nesterov diagnostics passed; optional interrupted probe remains visible. Earlier pending entries below describe historical state.
+
+- **2026-11-13**: Packaged original successful SGD/SAM/FGSM experiment in notebook 05 with four sections and corrected setup/writing workflow. User Colab rerun pending before GitHub publication; original benchmark and pilot remain completed and preserved.
+
+- **2026-11-13**: Inspected notebook 03 execution and replaced append/patch workflow with notebook 04: single worker, separate diagnostics/benchmark, guarded launches and current-run debug download. Host-side execution checks passed; GPU verification pending; historical results preserved.
+
+- **2026-11-13**: Audited completed ResNet-18 pilot against supplied paper and saved worker. No obvious SAM update defect; identified ordinary-vs-Nesterov momentum mismatch. Added separate Nesterov/diagnostics notebook; original results preserved, follow-up GPU execution pending.
+
+- **2026-11-13**: Added `repro_notebooks/02_resnet18_sgd_sam_fgsm.ipynb`: 100-step benchmark, held-out validation pilot, timing/accuracy figures and exported summaries. Retains the pinned JAX/Flax stack. Local Intel Arc GPU cannot run the CUDA stack; GPU results remain pending.
+
 - **2026-10-20**: Tracker created. Environment working on Colab T4, SAM and SGD smoke tests passed, code findings documented, shared notebook prepared. A100 setup and first real reproduction not yet started.
 
 ## 13. AI-usage log (for the appendix statement)
 
 - *(add entries: date, who, tool, what it was used for)*
+- **2026-11-13**: Codex used to inspect project code and papers, implement the requested benchmark notebook, and check notebook/Python syntax. No GPU experiments executed or research conclusions generated.
+
+- **2026-11-13**: Codex used to cross-check the supplied SAM paper and archived experiment code, document setup differences, and prepare an isolated Nesterov ablation with numerical diagnostics. No new GPU runs executed; causal interpretations remain unconfirmed.
+
+- **2026-11-13**: Codex used to diagnose duplicate worker code and consolidate notebook execution/diagnostic handling. Verified worker writing and launch guards locally without GPU training.
+
+- **2026-11-13**: Codex used to package the original completed experiment into a concise runnable notebook; verified source identity and notebook assembly, without new GPU runs or publication.
+
+- **2026-11-13**: Codex used to verify supplied execution records, preserve notebook outputs, organize final artifacts, remove obsolete generated files, and prepare GitHub publication. No new GPU runs.

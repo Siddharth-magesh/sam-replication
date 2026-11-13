@@ -1,0 +1,10 @@
+{
+  "notebook": "02_cifar10_resnet18_benchmark_pilot.ipynb",
+  "notebook_sha256": "b15bf7716212f7408799315f442f505cd7fecc5f71ff5671144f7239edfd58ea",
+  "worker_sha256": "601c5524d9f0c3aef7bff66f970877dd79f452cb7696ad5bbd12f900101a6eaf",
+  "source_run": "20261113_230318_00cfe6",
+  "worker_location": "Embedded WORKER_SOURCE in notebook; verified identical to executed experiment.py",
+  "outputs_preserved_byte_for_byte": true,
+  "all_three_methods_completed_epochs": 10,
+  "note": "All executed cells completed without recorded errors."
+}

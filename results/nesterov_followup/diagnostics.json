@@ -1,0 +1,26 @@
+{
+  "sam_zero_max_abs_difference": 1.1920928955078125e-07,
+  "fgsm_zero_max_abs_difference": 1.1920928955078125e-07,
+  "sam_actual_perturbation_norm": 0.04999998211860657,
+  "sam_radius_passed": true,
+  "fgsm_finite_and_range_passed": true,
+  "fgsm_max_pixel_delta": 0.01568630337715149,
+  "fgsm_budget_passed": true,
+  "sam_reference_max_abs_difference": 8.42998269945383e-06,
+  "sam_trace_equal": true,
+  "sam_constants_equal": true,
+  "sam_constant_count": 4,
+  "sam_canonical_trace_sha256": "e59ba7f03b5c9a184a083dbfd6c2014919fe62da4de18a9178b12fc9f0a0e582",
+  "sam_numerical_reference_within_tolerance": true,
+  "checks_passed": {
+    "SAM rho=0": true,
+    "FGSM epsilon=0": true,
+    "sam_trace_and_constants": true,
+    "compared_outputs_finite": true,
+    "sam_radius": true,
+    "fgsm_pixel_range": true,
+    "fgsm_budget": true
+  },
+  "warnings": [],
+  "status": "passed"
+}

@@ -1,0 +1,8 @@
+{
+  "phase": "pilot",
+  "status": "complete",
+  "manifest": {
+    "worker_sha256": "601c5524d9f0c3aef7bff66f970877dd79f452cb7696ad5bbd12f900101a6eaf",
+    "config_sha256": "e57a05fbd0bacabda96d7543fb60e77a46881e016acfa0eacb043f67821620b1"
+  }
+}

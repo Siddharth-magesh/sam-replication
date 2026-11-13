@@ -1,0 +1,4 @@
+,original_momentum_accuracy,new_accuracy,change_pp
+SGD,89.36,89.7,0.3400000000000034
+SAM,88.02,88.28,0.2600000000000051
+FGSM,79.52,80.06,0.5400000000000063
