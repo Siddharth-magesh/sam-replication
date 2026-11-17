@@ -123,7 +123,7 @@ def execute(args, root):
     print('SESSION=' + str(session), flush=True)
     if args.setup:
         # Bootstrap and workers now come from the single replication notebook.
-        exec(cell(main, 'def setup_command(command):'), namespace)
+        exec(cell(main, 'def setup_command(command, environment=None):'), namespace)
     exec(cell(main, 'WORKER_SOURCE ='), namespace)
     exec(cell(main, 'def budget_snapshot():'), namespace)
     exec(cell(main, 'def selected_runs():'), namespace)
