@@ -107,10 +107,12 @@ def execute(args, root):
                      DATA_DIR=root / 'tensorflow_datasets', BUDGET_FILE=root / 'gpu_budget.json',
                      RUN_SETUP=args.setup, RUN_PREFLIGHT=args.phase == 'preflight',
                      RUN_TRAINING=args.phase == 'train', RENDER_RESULTS=False,
-                     RUN_SELECTION=args.selection, RESUME_EXISTING=args.resume)
+                     RUN_SELECTION=args.selection, RESUME_EXISTING=args.resume,
+                     DIAGNOSTIC_ONLY=args.diagnostic_only)
     namespace['CONFIG'].update(budget_file=str(namespace['BUDGET_FILE']),
                               repo=str(namespace['REPO']), session=str(session),
-                              data_dir=str(namespace['DATA_DIR']))
+                              data_dir=str(namespace['DATA_DIR']),
+                              diagnostic_only=args.diagnostic_only)
     import_ledger(namespace['BUDGET_FILE'], args.ledger_import)
     if args.cifar_archive:
         assert hashlib.sha256(args.cifar_archive.read_bytes()).hexdigest() == ARCHIVE_SHA256
@@ -152,6 +154,8 @@ def main():
     parser.add_argument('--session', type=Path, help='Existing session; mandatory for train/report.')
     parser.add_argument('--selection', default='SAM-200_seed_0', help='Exact run label or all (nine runs).')
     parser.add_argument('--resume', action='store_true')
+    parser.add_argument('--diagnostic-only', action='store_true',
+                        help='Stop after one-replica diagnostics; preflight only.')
     parser.add_argument('--ledger-import', type=Path)
     parser.add_argument('--cifar-archive', type=Path)
     parser.add_argument('--max-hours', type=float, default=0.75, help='Wall limit including setup; default 45 minutes.')
@@ -160,6 +164,7 @@ def main():
     args = parser.parse_args()
     assert 0 < args.max_hours <= 40
     assert not args.setup or args.phase == 'preflight', '--setup is only for preflight.'
+    assert not args.diagnostic_only or args.phase == 'preflight', '--diagnostic-only is only for preflight.'
     assert args.phase == 'preflight' or args.session, 'Specify the preflight SESSION for train/report.'
     if not args.execute:
         print('PLAN ONLY. Target: csci567-sam, full A100 40 GB; phase:', args.phase)

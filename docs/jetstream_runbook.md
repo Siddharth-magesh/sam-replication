@@ -120,6 +120,16 @@ The 45-minute launcher limit includes setup; at the guide's full-A100 rate of 64
 
 The launcher prints `SESSION=/workspace/sam_paper_replication/runs/...` to its log. Preserve this exact folder. Both strict preflights must finish successfully. The T4 equivalence warning does not bypass the A100 gate. If either fails, inspect the log; do not start training. Use a fresh session after a code change while keeping the same ledger.
 
+For a bounded one-replica harness diagnostic after a code change, use one selected method and stop before the eight-replica/full-epoch checks:
+
+```bash
+bash experiments/start_jetstream.sh preflight --execute --diagnostic-only \
+  --selection SGD-200_seed_0 --max-hours 0.25 \
+  --openstack-bin /workspace/js2-control/bin/openstack
+```
+
+Inspect that session's `preflight/SGD-200_seed_0/diagnostics.json`. Only run the strict preflight after the diagnostic reports repeatable original `pmap` output and equivalent `vmap` output.
+
 ## 7. Full runs only after preflight passes and costs fit
 
 Review the selected-run cost estimate and remaining allocation in Exosphere. The entire nine-run matrix remains SAM-200, SGD-200 and SGD-400 for seeds 0, 1, 2. Do not shrink epochs or drop seeds to claim completion. Start the same instance again if it auto-shelved, reconnect, and substitute the exact SESSION below:
