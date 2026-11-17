@@ -168,7 +168,7 @@ Do not use the old ResNet-18 pilots or the ten-batch smoke accuracy as a reprodu
 | Ledger missing or divergent | Transfer/reconcile the authoritative ledger. Never create a zero ledger to bypass the cap. |
 | Ledger retains an unresolved reservation | A supervisor may have died. Reconcile against scheduler/process evidence; do not manually zero it. |
 | Numerical preflight fails | Keep its diagnostics and logs. Do not relax tolerances to force a pass or proceed to training. |
-| CUDA/package failure | Setup keeps the pinned CUDA 11.0 runtime and installs NVIDIA `cuda-nvcc=11.3.122` solely for its CUDA 11.x compiler. The worker prepends the runtime `lib` directory and a validated CUDA 11.x `ptxas`, sets `CUDA_HOME`/`CUDA_PATH`, and runs a minimal JAX GPU JIT before preflight. Inspect those setup records; retain legacy pins. Do not install modern JAX/Flax or use a different implementation silently. |
+| CUDA/package failure | Setup keeps the pinned CUDA 11.0 runtime and installs NVIDIA label `cuda-11.3.1`'s `cuda-nvcc=11.3.122` solely for its CUDA 11.x compiler. The worker prepends the runtime `lib` directory and a validated CUDA 11.x `ptxas`, sets `CUDA_HOME`/`CUDA_PATH`, and runs a minimal JAX GPU JIT before preflight. Inspect those setup records; retain legacy pins. Do not install modern JAX/Flax or use a different implementation silently. |
 | GPU out of memory | Record the failure and verify actual GPU memory. A100 feasibility is still (to verify). |
 | Interrupted training | Keep exact SESSION/config/worker/environment; rerun selected run with `--resume`. A partial epoch is rerun and charged. |
 | Session source/config mismatch | Use a new session with the same ledger after reviewing the change; do not overwrite provenance. |
