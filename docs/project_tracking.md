@@ -93,6 +93,8 @@ All timings below are **estimates** extrapolated from the measured T4 speeds, as
 
 One full comparison (SAM, SGD-200, SGD-400) is roughly 12 to 16 A100-hours. The course guideline allows about 35 hours for replicating the key figure and 35 for our own experiment. Three seeds of everything would take about 36 to 48 hours, which exceeds the replication budget, so the provisional plan is: three seeds each of SAM and SGD-200 (about 20 to 30 hours), one seed of SGD-400, CIFAR-10 only, and CIFAR-100 only if budget remains. The first target is the single Table 1 row: SAM 2.7 +/- 0.1 vs SGD 3.5 +/- 0.1 test error (CIFAR-100 in the same row: 16.5 vs 18.8). If our single-seed runs land within a few tenths of those numbers, the setup is trustworthy. If not, that is reportable, and we investigate the m = 256 effect first. Debug on 2-epoch runs, time one epoch before launching anything long, launch long runs inside `tmux`, write to persistent storage, and use `--evaluate_every 10` to avoid per-epoch evaluation overhead.
 
+**2026-11-16 notebook scope update:** The WRN notebook plans all three durations across seeds 0, 1 and 2. The earlier reduced-run proposal above is historical. The budget assertion now applies only to RUN_SELECTION, with the nine-run projection informational and preflight still mandatory. A100 costs and execution are **(to verify)**. Assess reproduction only after all nine runs, using the notebook's predeclared paired-CI and 0.3-point rule; a single close result is not sufficient.
+
 ## 9. Next steps and owners
 
 | # | Task | Owner | Proposed due | Status |
@@ -108,6 +110,10 @@ One full comparison (SAM, SGD-200, SGD-400) is roughly 12 to 16 A100-hours. The 
 | 9 | If H1: design the m = 32 emulation patch (8 chunks per batch) | TBD | Nov 3 | Not started |
 | 10 | Full report draft for the Nov 20 review | All | Nov 18 | Not started |
 | 11 | ResNet-18 / batch-128 SGD, SAM and FGSM timing notebook and optional 10-epoch pilot | Code lead | Nov 13 | Complete: both executed notebooks verified; ordinary momentum SGD/SAM/FGSM 89.24/87.82/79.12%, Nesterov 89.70/88.28/80.06% final validation accuracy |
+
+| 12 | WRN-28-10 replication notebook: selected-run budget, paired inference and predeclared reproduction rule | Code lead | Nov 16 | T4 SGD functional smoke passed; SAM out-of-memory, combined smoke incomplete. Checkpoint metadata fixed; A100 strict preflight and reproduction outcome (to verify); no full training run |
+
+| 13 | Jetstream background launcher for csci567-sam | Code lead | Nov 17 | Prepared; Python/shell syntax, notebook selectors and no-execution CLI path checked; full A100 preflight and automatic shelving (to verify) |
 
 Owners marked TBD should be filled in at the next meeting. Each task should have exactly one owner, even if several people help.
 
@@ -127,6 +133,14 @@ The report is 4 pages excluding references and appendix, in a standard conferenc
 
 ## 12. Changelog
 
+- **2026-11-17**: Added the user-requested detailed Jetstream runbook with file roles, commands, prerequisites, lifecycle/budget handling, recovery and a copyable chat handoff. Prepared feature-branch publication; remote execution remains (to verify).
+
+- **2026-11-17**: Added GitHub-ready Jetstream Python/tmux launchers reusing notebook code, with explicit execution, fixed csci567-sam identity, full-A100 guard, persistent storage, ledger import, wall deadline, resume/report paths and optional explicit opt-out from automatic shelving. Remote operation remains (to verify); no training launched by this packaging task.
+
+- **2026-11-16 (November 17 UTC)**: Executed WRN T4 smoke through WSL Colab CLI. SGD functional smoke passed; SAM exhausted GPU memory, so combined smoke failed. Fixed legacy checkpoint integer serialization and diagnostic buffer retention; recorded original-kernel repeatability separately without relaxing main preflight. Charged 0.868287 cumulative worker GPU-hours including earlier attempt. A100 preflight/full replication (to verify).
+
+- **2026-11-16**: Updated WRN notebook to budget only RUN_SELECTION (nine-run estimate informational), retain preflight, compare parameter counts with the official factory, and report all three paired SGD-minus-SAM differences with mean, SD and t-based 95% CI. Predeclared primary paper-style reproduction rule requires lower SAM mean, paired CI above zero and means within 0.3 percentage points of 2.7/3.5. Training logic/settings unchanged; outputs empty and switches off. GPU checks/results (to verify).
+
 - **2026-11-13**: Verified both final Colab runs and worker/config hashes; renamed executed notebooks with outputs intact, curated results, and removed superseded generated work. Nesterov diagnostics passed; optional interrupted probe remains visible. Earlier pending entries below describe historical state.
 
 - **2026-11-13**: Packaged original successful SGD/SAM/FGSM experiment in notebook 05 with four sections and corrected setup/writing workflow. User Colab rerun pending before GitHub publication; original benchmark and pilot remain completed and preserved.
@@ -141,6 +155,12 @@ The report is 4 pages excluding references and appendix, in a standard conferenc
 
 ## 13. AI-usage log (for the appendix statement)
 
+- **2026-11-17**: Codex documented the complete Jetstream workflow and prepared the requested launcher/notebook/runbook publication. No GPU run or new research conclusion.
+
+- **2026-11-17**: Codex prepared and statically checked background launchers and operating instructions from the supplied Jetstream guide. Preserved pinned SAM implementation and documented unresolved hardware/numerical readiness. No remote execution of the new launcher.
+
+- **2026-11-16 (November 17 UTC)**: Codex executed authorized T4 smoke/diagnostic probes, traced checkpoint and memory failures, preserved failed/successful evidence and budget accounting, and prepared main-machine preflight instructions. No full replication or paper-result conclusion.
+
 - *(add entries: date, who, tool, what it was used for)*
 - **2026-11-13**: Codex used to inspect project code and papers, implement the requested benchmark notebook, and check notebook/Python syntax. No GPU experiments executed or research conclusions generated.
 
@@ -151,3 +171,5 @@ The report is 4 pages excluding references and appendix, in a standard conferenc
 - **2026-11-13**: Codex used to package the original completed experiment into a concise runnable notebook; verified source identity and notebook assembly, without new GPU runs or publication.
 
 - **2026-11-13**: Codex used to verify supplied execution records, preserve notebook outputs, organize final artifacts, remove obsolete generated files, and prepare GitHub publication. No new GPU runs.
+
+- **2026-11-16**: Codex used to implement user-specified budget/reporting/architecture checks and statically validate notebook syntax and unchanged training code. No training or research conclusions generated; runtime behavior and outcomes (to verify).

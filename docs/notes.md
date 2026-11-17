@@ -59,3 +59,98 @@ Nesterov diagnostics passed without warnings: zero-perturbation checks, finite/r
 Paper comparison: supplied 2010.01412v3.pdf, Section 3.1/Table 1/Appendix C.1. WRN-28-10 Basic uses 200 epochs, CIFAR batch 256 across eight GPUs (m=32), test error and five replicas; Table 1 reports SAM 2.7 +/- 0.1% vs SGD 3.5 +/- 0.1%. Our single-seed, single-GPU, 10-epoch ResNet-18 validation pilots are not that replication. SAM finishes 1.42 percentage points below SGD in both supplied runs; no code or settings were changed to reverse that result. Released SGD uses Nesterov whereas the original task used ordinary momentum. This follow-up does not establish the cause of the gap.
 
 Historical attempts: the earlier ordinary-momentum pilot reached SGD 89.36%, SAM 88.02%, FGSM 79.52%. Earlier audit attempts failed zero-rho/reference comparisons, a partially created environment skipped dependency installation, repeated append/patch cells duplicated worker code, and a runtime restart exposed a missing ast import. A probe also observed same-function execution variability. Consolidation replaced append/patch cells with one worker string, setup now installs dependencies even when Python already exists, and clean-v4 records numerical-reference warnings conditional on matching traces/constants while retaining other checks. The final supplied follow-up passed numerical tolerance too. Failed attempts are recorded here; obsolete notebooks, downloaded clones, redundant run folders and verbose debug/probe dumps were removed at the user's request. Current results retain diagnostic differences, configuration, environment, phase markers, timings, epoch histories and figures; workers remain embedded in notebooks. Raw logs, dataset split archives and checkpoint files are not part of the final small-results package.
+
+
+## WRN-28-10 T4 smoke execution (2026-11-16 local / November 17 UTC)
+
+Executed the pinned Python 3.8 / JAX 0.2.6 / jaxlib 0.1.57+cuda110 / Flax 0.2.2 worker on the existing Colab CLI T4 session. Original SAM/SGD code and model/hyperparameters were unchanged. SGD passed ten batch-256 updates with eight logical sub-batches, finite losses, changed parameters, independent first-pass BN states, evaluation over 320 examples and exact checkpoint tensor restoration at steps 5 and 10. This is a functional smoke, not a paper accuracy result. SAM failed with GPU out-of-memory at the eight-replica diagnostic, requesting a 6.16 GiB allocation. Releasing discarded reference/candidate buffers earlier did not resolve it. Combined smoke: FAILED / INCOMPLETE.
+
+Fixed checkpoint metadata serialization: Flax 0.2.2/msgpack rejects numpy.int32 scalars, so completed_epoch now uses a Python int in the payload and restore template. Both notebooks release discarded diagnostic outputs before the eight-lane step. Notebook outputs remain cleared; original sam_jax files and requirement pins remain untouched.
+
+The one-replica numerical comparison was not a reliable standalone equivalence test on this T4: a repeat of the unchanged original pmap call on identical inputs differed by optimizer relative L2 0.006275, comparable to vmap differences. Disabling convolution autotuning did not solve the strict one-replica check; that experimental flag was NOT adopted. The smoke now records reference repeatability separately and permits functional checks only when differences remain within a declared three-times-reference-noise bound (floor 1e-3). Such a result explicitly remains inconclusive, not numerical equivalence. Main replication preflight retains the fixed strict gate and additionally requires the reference to be repeatable. A100 equivalence and full replication remain (to verify).
+
+The slow official CIFAR archive was transferred in ranges through WSL and reassembled into TFDS's supported manual cache. Size 170052171 bytes and SHA256 c4a38c50a1bc5f3a1c5537f2155ab9d68f9f25eb1ed8d9ddda3db29a59bca1dd match pinned TFDS checksums. No data or augmentation changes. The interrupted download, failed diagnostics and successful SGD attempt remain charged: authoritative total 0.8682869146130557 worker GPU-hours, leaving 39.13171308538694 of 40. Installation and idle allocation time are outside this worker ledger. No full training was launched. A proposed further SAM workspace probe was NOT executed because CLI credential refresh was unavailable; the user chose main-machine instructions instead.
+
+
+## Jetstream background runner (2026-11-17)
+
+`experiments/jetstream_wrn.py` reads the reviewed worker, supervisor, budget gates and plotting code from `repro_notebooks/04_wrn28_10_cifar10_paper_replication.ipynb`. Setup reuses the pinned bootstrap from `00_colab_smoke_test.ipynb`. Keep both notebooks in the clone. No SAM/SGD reimplementation. Execution requires `--execute`; otherwise the command only prints a plan. `start_jetstream.sh` starts a detached tmux session named sam-wrn; logs, environment, dataset, checkpoints and reports stay on the persistent `/workspace` volume. The main notebook remains disabled by default.
+
+Only server csci567-sam, UUID b9f2a4a2-4077-46a6-aa5f-bf36ee299161, is accepted, verified using the instance metadata service. The last inspected flavor was g3.medium (10 GB A100 slice); the runner requires a full 40 GB A100 because the unchanged eight-replica SAM already exhausted T4 memory. Do not delete/recreate or resize another team's instance. Arrange the hardware change separately; partial-to-full GPU driver compatibility is (to verify). SSH access, full A100 numerical preflight, runtime, tmux execution and automatic shelving with this runner remain (to verify). Python 3.8 syntax, shell syntax, notebook selectors and plan-only CLI checks passed. These checks are not GPU validation.
+
+### Before starting
+
+After publishing the feature branch, log into **csci567-sam** and clone on the volume:
+
+```bash
+cd /workspace
+git clone --branch feat/jetstream-wrn-runner https://github.com/Siddharth-magesh/sam-replication.git
+cd /workspace/sam-replication
+nvidia-smi
+```
+
+If this checkout already exists, inspect its branch/status first; do not overwrite it. Use a persistent mounted `/workspace`. Do not run `js2 setup`: its general PyTorch/vLLM environment is unnecessary for this legacy JAX experiment.
+
+For automatic shelving after laptop disconnection, the instance needs an independently configured OpenStack CLI and your cloud credentials **outside Git**. On the instance:
+
+```bash
+python3 -m venv /workspace/js2-control
+/workspace/js2-control/bin/python -m pip install python-openstackclient
+mkdir -p ~/.config/openstack
+chmod 700 ~/.config/openstack
+# Securely transfer your existing clouds.yaml to ~/.config/openstack/clouds.yaml.
+chmod 600 ~/.config/openstack/clouds.yaml
+export OS_CLOUD=CIS262089_IU
+/workspace/js2-control/bin/openstack server show b9f2a4a2-4077-46a6-aa5f-bf36ee299161 -c name -c status
+```
+
+This control environment is separate from the pinned SAM environment. Do not commit credentials. Confirm the response names csci567-sam. If the cloud name differs in your credential file, use that name. The runner checks credentials before starting work. Setup/access failures before that check cannot self-shelve: use `~/bin/js2 stop csci567-sam` from WSL. The alternative `--leave-active` explicitly disables automatic shelving and requires someone to stop billing manually; it is unsuitable for an unattended overnight run.
+
+Transfer the existing authoritative `gpu_budget.json` and verified `cifar-10-binary.tar.gz` into `/workspace/sam_inputs/` using your secure file-transfer method. These are inputs for migrating this experiment, not a whole-tree results upload. Do not put either in Git or start a zero ledger. Local handoff: `C:/Users/Siddharth Magesh/AppData/Local/Temp/sam_main_machine_handoff/`. The carried ledger has 0.8682869146 worker GPU-hours charged; Jetstream allocated idle/setup time is additional SU usage and is not represented by that ledger.
+
+### First run: setup and preflight only
+
+```bash
+cd /workspace/sam-replication
+export OS_CLOUD=CIS262089_IU
+bash experiments/start_jetstream.sh preflight --execute --setup \
+  --ledger-import /workspace/sam_inputs/gpu_budget.json \
+  --cifar-archive /workspace/sam_inputs/cifar-10-binary.tar.gz \
+  --selection all --max-hours 0.75 \
+  --openstack-bin /workspace/js2-control/bin/openstack
+```
+
+The 45-minute launcher limit includes setup; at the guide's full-A100 rate of 64 SUs/hour this is approximately 48 SUs plus start/shelve latency, not an exact billing cap. The independent worker supervisor also enforces the cumulative 40-hour experiment limit. The launcher requests shelving on success, failure or handled interruption, after workers exit. Cloud/API errors, abrupt VM/process death or a teammate's running GPU job can prevent automatic shelving. Check the instance's final SHELVED_OFFLOADED state in WSL/Exosphere; a Linux shutdown is not a substitute. Never shelve over another active job. Do not rely on the staff's two-hour idle cleanup.
+
+The launcher prints `SESSION=/workspace/sam_paper_replication/runs/...` to its log. Preserve this exact folder. Both strict preflights must finish successfully. The T4 equivalence warning does not bypass the A100 gate. If either fails, inspect the log; do not start training. Use a fresh session after a code change while keeping the same ledger.
+
+### Full runs only after preflight passes and costs fit
+
+Review the selected-run cost estimate and remaining allocation in Exosphere. The entire nine-run matrix remains SAM-200, SGD-200 and SGD-400 for seeds 0, 1, 2. Do not shrink epochs or drop seeds to claim completion. Start the same instance again if it auto-shelved, reconnect, and substitute the exact SESSION below:
+
+```bash
+cd /workspace/sam-replication
+export OS_CLOUD=CIS262089_IU
+bash experiments/start_jetstream.sh train --execute \
+  --session /workspace/sam_paper_replication/runs/REPLACE_WITH_SESSION \
+  --selection all --max-hours "${APPROVED_HOURS:?Set the hours approved after preflight}" \
+  --openstack-bin /workspace/js2-control/bin/openstack
+```
+
+Set `APPROVED_HOURS` to the wall-time limit justified by preflight and your allocation; the command refuses to run until it is set. This is a limit, not a runtime estimate. At 64 SUs/hour, 39 allocated hours would be 2,496 SUs. The selected estimated remaining work must fit the remaining 40-hour worker ledger. For staged execution, select one exact label such as `SAM-200_seed_0`. A deadline can interrupt an epoch; recovery restores the last fully committed epoch. If a run was interrupted, rerun with the same SESSION/selection plus `--resume`; completed runs are skipped after provenance checks. Do not change the notebook worker between preflight and training.
+
+Training completion renders the notebook's final-error plots and paired statistics into `SESSION/summary/`. Missing runs are reported as incomplete, not aggregated. To render saved/partial results separately, use the `report` phase with the same `--session` and `--execute` (and normal shelving credentials).
+
+### Monitor, disconnect and retrieve
+
+```bash
+# On csci567-sam:
+tmux attach -t sam-wrn
+# Ctrl-b, then d detaches. Closing the laptop does not end tmux.
+tail -f /workspace/sam_paper_replication/launcher_logs/YOUR_LOG.log
+```
+
+A finished tmux session disappears; its log and `launcher_*.json` receipt remain. For a graceful stop, attach and press Ctrl-c; allow worker cleanup and shelving to finish. Do not kill the supervisor or reset its ledger reservation. Jobs survive SSH loss, not a VM shelf/reboot/deletion. Results remain on the persistent volume after shelving. Reconnect later to download needed results, then run `~/bin/js2 stop csci567-sam` from WSL if still active. The SU allocation and the experiment's worker-time ledger are different budgets; keep both within limits.
+
+
+Detailed operating and chat-handoff guide: `docs/jetstream_runbook.md` (added November 17, 2026).

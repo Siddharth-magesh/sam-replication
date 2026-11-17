@@ -13,3 +13,10 @@ repro_notebooks/numerical_probe_bundle/
 *.msgpack
 *.tfrecord*
 events.out.tfevents.*
+
+# Remote credentials, cumulative accounting and input archives stay outside Git.
+clouds.yaml
+clouds.yml
+gpu_budget.json
+authoritative_gpu_budget.json
+cifar-10-*.tar.gz
