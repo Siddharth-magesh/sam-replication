@@ -84,6 +84,8 @@ Only server csci567-sam, UUID 195e6a8f-8ae1-45be-bcd7-7845b0b2419f, is accepted,
 
 The Jetstream `smoke` phase is a separate bounded functional test. It runs one complete 195-batch epoch for fresh seed-0 SGD-200 and SAM-200 using the original mapped training step, eight logical sub-batches, and the fixed 200-epoch schedule; it records finite losses, parameter changes, epoch runtime, sampled `nvidia-smi` memory, and save/restore evaluation. It does not run or satisfy the strict numerical preflight, does not produce a preflight pass, and does not authorize full training. Smoke time remains charged to the same cumulative ledger and the normal instance identity and auto-shelving guards remain active.
 
+The first Jetstream smoke attempt (`20261117_174647`) failed during the redundant second WRN model construction used only for architecture-count comparison, with `CUDA_ERROR_ILLEGAL_ADDRESS` surfacing from the pinned JAX/Flax initialization path. The smoke worker now uses the single actual WRN-28-10 construction and records its parameter count/configuration instead of initializing a duplicate model; this does not change the SAM/SGD implementation or settings. Runtime confirmation remains pending.
+
 ### Before starting
 
 Use the consolidated `repro` branch. Log into **csci567-sam** and clone on the volume:

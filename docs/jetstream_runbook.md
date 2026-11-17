@@ -191,6 +191,7 @@ Do not use the old ResNet-18 pilots or the ten-batch smoke accuracy as a reprodu
 | Numerical preflight fails | Keep its diagnostics and logs. Do not relax tolerances to force a pass or proceed to training. |
 | CUDA/package failure | Setup keeps the pinned CUDA 11.0 runtime and installs NVIDIA label `cuda-11.3.1`'s `cuda-nvcc=11.3.122` solely for its CUDA 11.x compiler. The worker prepends the runtime `lib` directory and a validated CUDA 11.x `ptxas`, sets `CUDA_HOME`/`CUDA_PATH`, and runs a minimal JAX GPU JIT before preflight. Inspect those setup records; retain legacy pins. Do not install modern JAX/Flax or use a different implementation silently. |
 | GPU out of memory | Record the failure and verify actual GPU memory. A100 feasibility is still (to verify). |
+| `CUDA_ERROR_ILLEGAL_ADDRESS` during smoke initialization | Preserve the failed session and log. The smoke worker avoids a redundant second WRN initialization; retry only after pulling the corresponding commit, and treat any recurrence as a pinned JAX/driver compatibility issue requiring separate investigation. |
 | Interrupted training | Keep exact SESSION/config/worker/environment; rerun selected run with `--resume`. A partial epoch is rerun and charged. |
 | Session source/config mismatch | Use a new session with the same ledger after reviewing the change; do not overwrite provenance. |
 | Deadline reached | Inspect latest committed checkpoint and ledger, then resume only within approved remaining budgets. |
