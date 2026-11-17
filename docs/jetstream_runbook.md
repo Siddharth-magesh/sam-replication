@@ -39,18 +39,22 @@ The runner imports the original SAM code at pinned fork commit `f7b9ff46ee0deab8
 | `experiments/start_jetstream.sh` | Creates detached tmux session `sam-wrn` and captures console output | Normal background entry point; invoke with bash |
 | `experiments/jetstream_wrn.py` | Configures paths, imports budget, checks hardware/identity, runs requested phase and requests shelving | Called by the shell launcher; without `--execute`, prints a plan only |
 | `repro_notebooks/04_wrn28_10_cifar10_paper_replication.ipynb` | Experiment contract, original-step wrapper, independent budget supervisor, checkpoint/resume, estimates and figures | Required by the Python runner; also usable interactively; switches remain disabled in the saved notebook |
-| `repro_notebooks/00_colab_smoke_test.ipynb` | Ten-batch Colab smoke and standalone pinned-environment bootstrap | Required because the Jetstream runner reuses its setup cell; its Colab run-all switches are enabled, but the runner does not execute the whole notebook |
+| `repro_notebooks/01_sam_colab_setup.ipynb` | Historical original setup and recorded smoke output | Preserved reference; not required by the runner |
+| `repro_notebooks/02_cifar10_resnet18_benchmark_pilot.ipynb` | Completed ordinary-momentum pilot | Preserved with executed outputs |
+| `repro_notebooks/03_cifar10_resnet18_nesterov_followup.ipynb` | Completed Nesterov follow-up | Preserved with executed outputs |
 | `sam_jax/` | Authors' implementation | Unchanged; runtime uses a separate pinned checkout under WORK_ROOT/work/sam |
 | `requirements.txt` | Original dependency pins | Unchanged |
 | `docs/jetstream_runbook.md` | This runbook | Give this file to another chat or teammate |
 | `docs/notes.md` | Technical findings and failed/successful attempt history | Preserve failures and deviations |
 | `docs/project_tracking.md` | Task status and AI-usage history | Update after verified runs |
 
-Clone the **whole repository**. Copying only the two launch scripts is insufficient because they read notebook cells at runtime. The previous temporary WSL file `/tmp/sam_js2_stage/setup_and_preflight.py` is superseded by the tracked launchers and is not needed.
+Clone the **whole repository**. Copying only the two launch scripts is insufficient because they read the WRN replication notebook cells at runtime. The previous temporary WSL file `/tmp/sam_js2_stage/setup_and_preflight.py` is superseded by the tracked launchers and is not needed.
+
+The repository is consolidated on `repro`, its default branch. The obsolete `00_colab_smoke_test.ipynb` and `initial_raw_testing.ipynb` were removed from the current tree; their historical versions remain recoverable in Git. Setup was moved into `04_wrn28_10_cifar10_paper_replication.ipynb` before removal. Completed notebooks 01/02/03 retain their original bytes and outputs.
 
 ## 4. Machine, storage and budgets
 
-Only `csci567-sam` is authorized. Its recorded OpenStack UUID is `b9f2a4a2-4077-46a6-aa5f-bf36ee299161`. The runner verifies the instance metadata UUID and checks that the cloud credentials resolve that UUID to this name. Never substitute another team's instance. If this instance is rebuilt with a new UUID, stop and review identity before changing the guard.
+Only `csci567-sam` is authorized. Its current OpenStack UUID is `195e6a8f-8ae1-45be-bcd7-7845b0b2419f`. The runner verifies the instance metadata UUID and checks that the cloud credentials resolve that UUID to this name. Never substitute another team's instance. If this instance is rebuilt with a new UUID, stop and review identity before changing the guard.
 
 | Location on the machine | Contents |
 |---|---|
@@ -72,11 +76,11 @@ Shelving stops compute billing; Linux shutdown/SHUTOFF is not the same. Automati
 ## 5. Prepare the server and inputs
 
 
-After publishing the feature branch, log into **csci567-sam** and clone on the volume:
+Use the consolidated `repro` branch. Log into **csci567-sam** and clone on the volume:
 
 ```bash
 cd /workspace
-git clone --branch feat/jetstream-wrn-runner https://github.com/Siddharth-magesh/sam-replication.git
+git clone --branch repro https://github.com/Siddharth-magesh/sam-replication.git
 cd /workspace/sam-replication
 nvidia-smi
 ```
@@ -93,7 +97,7 @@ chmod 700 ~/.config/openstack
 # Securely transfer your existing clouds.yaml to ~/.config/openstack/clouds.yaml.
 chmod 600 ~/.config/openstack/clouds.yaml
 export OS_CLOUD=CIS262089_IU
-/workspace/js2-control/bin/openstack server show b9f2a4a2-4077-46a6-aa5f-bf36ee299161 -c name -c status
+/workspace/js2-control/bin/openstack server show 195e6a8f-8ae1-45be-bcd7-7845b0b2419f -c name -c status
 ```
 
 This control environment is separate from the pinned SAM environment. Do not commit credentials. Confirm the response names csci567-sam. If the cloud name differs in your credential file, use that name. The runner checks credentials before starting work. Setup/access failures before that check cannot self-shelve: use `~/bin/js2 stop csci567-sam` from WSL. The alternative `--leave-active` explicitly disables automatic shelving and requires someone to stop billing manually; it is unsuitable for an unattended overnight run.
@@ -164,7 +168,7 @@ Do not use the old ResNet-18 pilots or the ten-batch smoke accuracy as a reprodu
 | Ledger missing or divergent | Transfer/reconcile the authoritative ledger. Never create a zero ledger to bypass the cap. |
 | Ledger retains an unresolved reservation | A supervisor may have died. Reconcile against scheduler/process evidence; do not manually zero it. |
 | Numerical preflight fails | Keep its diagnostics and logs. Do not relax tolerances to force a pass or proceed to training. |
-| CUDA/package failure | Inspect setup/environment logs; retain legacy pins. Do not install modern JAX/Flax or use a different implementation silently. |
+| CUDA/package failure | The worker prepends the pinned environment's CUDA 11.0 `bin` and `lib` directories, sets `CUDA_HOME`/`CUDA_PATH`, validates `ptxas --version`, and runs a minimal JAX GPU JIT before preflight. Inspect those setup records; retain legacy pins. Do not install modern JAX/Flax or use a different implementation silently. |
 | GPU out of memory | Record the failure and verify actual GPU memory. A100 feasibility is still (to verify). |
 | Interrupted training | Keep exact SESSION/config/worker/environment; rerun selected run with `--resume`. A partial epoch is rerun and charged. |
 | Session source/config mismatch | Use a new session with the same ledger after reviewing the change; do not overwrite provenance. |

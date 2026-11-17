@@ -14,7 +14,7 @@ import sys
 import time
 import urllib.request
 
-SERVER_ID = 'b9f2a4a2-4077-46a6-aa5f-bf36ee299161'
+SERVER_ID = '195e6a8f-8ae1-45be-bcd7-7845b0b2419f'
 SERVER_NAME = 'csci567-sam'
 REPOSITORY = Path(__file__).resolve().parents[1]
 NOTEBOOKS = REPOSITORY / 'repro_notebooks'
@@ -96,7 +96,6 @@ def shelve(binary):
 
 def execute(args, root):
     main = '04_wrn28_10_cifar10_paper_replication.ipynb'
-    smoke = '00_colab_smoke_test.ipynb'
     namespace = {'__name__': '__main__'}
     exec(cell(main, "WORK_ROOT = Path.home()"), namespace)
     session = args.session.resolve() if args.session else root / 'runs' / time.strftime('%Y%m%d_%H%M%S')
@@ -123,16 +122,8 @@ def execute(args, root):
             shutil.copy2(args.cifar_archive, destination)
     print('SESSION=' + str(session), flush=True)
     if args.setup:
-        # Reuse the smoke notebook's standalone bootstrap, with replication paths.
-        # It installs the original pinned stack, not js2's PyTorch/vLLM environment.
-        import traceback
-        import tarfile
-        import io
-        import platform
-        namespace.update(traceback=traceback, urllib=__import__('urllib.request'),
-                         tarfile=tarfile, io=io, platform=platform, SETUP_OK=False, FAILURES=[])
-        exec(cell(smoke, 'def setup_command(command):'), namespace)
-        assert namespace['SETUP_OK'], 'Setup failed; see SESSION/setup.log.'
+        # Bootstrap and workers now come from the single replication notebook.
+        exec(cell(main, 'def setup_command(command):'), namespace)
     exec(cell(main, 'WORKER_SOURCE ='), namespace)
     exec(cell(main, 'def budget_snapshot():'), namespace)
     exec(cell(main, 'def selected_runs():'), namespace)

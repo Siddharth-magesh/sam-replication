@@ -74,17 +74,19 @@ The slow official CIFAR archive was transferred in ranges through WSL and reasse
 
 ## Jetstream background runner (2026-11-17)
 
-`experiments/jetstream_wrn.py` reads the reviewed worker, supervisor, budget gates and plotting code from `repro_notebooks/04_wrn28_10_cifar10_paper_replication.ipynb`. Setup reuses the pinned bootstrap from `00_colab_smoke_test.ipynb`. Keep both notebooks in the clone. No SAM/SGD reimplementation. Execution requires `--execute`; otherwise the command only prints a plan. `start_jetstream.sh` starts a detached tmux session named sam-wrn; logs, environment, dataset, checkpoints and reports stay on the persistent `/workspace` volume. The main notebook remains disabled by default.
+`experiments/jetstream_wrn.py` reads the reviewed worker, supervisor, budget gates and plotting code from `repro_notebooks/04_wrn28_10_cifar10_paper_replication.ipynb`. The pinned bootstrap now lives in the same WRN replication notebook. The separate Colab smoke notebook has been removed; keep the WRN notebook in the clone. No SAM/SGD reimplementation. Execution requires `--execute`; otherwise the command only prints a plan. `start_jetstream.sh` starts a detached tmux session named sam-wrn; logs, environment, dataset, checkpoints and reports stay on the persistent `/workspace` volume. The main notebook remains disabled by default.
 
-Only server csci567-sam, UUID b9f2a4a2-4077-46a6-aa5f-bf36ee299161, is accepted, verified using the instance metadata service. The last inspected flavor was g3.medium (10 GB A100 slice); the runner requires a full 40 GB A100 because the unchanged eight-replica SAM already exhausted T4 memory. Do not delete/recreate or resize another team's instance. Arrange the hardware change separately; partial-to-full GPU driver compatibility is (to verify). SSH access, full A100 numerical preflight, runtime, tmux execution and automatic shelving with this runner remain (to verify). Python 3.8 syntax, shell syntax, notebook selectors and plan-only CLI checks passed. These checks are not GPU validation.
+The pinned setup now prepends the conda CUDA 11.0 environment to `PATH`, sets `CUDA_HOME` and `CUDA_PATH`, and passes the same environment to workers. It validates the resolved `ptxas --version` and runs a minimal JAX GPU JIT before preflight, preventing a system CUDA 13.x `ptxas` from being selected by XLA. TensorFlow's legacy CUDA 10.x library warnings remain separate because TensorFlow GPU devices are hidden.
+
+Only server csci567-sam, UUID 195e6a8f-8ae1-45be-bcd7-7845b0b2419f, is accepted, verified using the instance metadata service. The last inspected flavor was g3.medium (10 GB A100 slice); the runner requires a full 40 GB A100 because the unchanged eight-replica SAM already exhausted T4 memory. Do not delete/recreate or resize another team's instance. Arrange the hardware change separately; partial-to-full GPU driver compatibility is (to verify). SSH access, full A100 numerical preflight, runtime, tmux execution and automatic shelving with this runner remain (to verify). Python 3.8 syntax, shell syntax, notebook selectors and plan-only CLI checks passed. These checks are not GPU validation.
 
 ### Before starting
 
-After publishing the feature branch, log into **csci567-sam** and clone on the volume:
+Use the consolidated `repro` branch. Log into **csci567-sam** and clone on the volume:
 
 ```bash
 cd /workspace
-git clone --branch feat/jetstream-wrn-runner https://github.com/Siddharth-magesh/sam-replication.git
+git clone --branch repro https://github.com/Siddharth-magesh/sam-replication.git
 cd /workspace/sam-replication
 nvidia-smi
 ```
@@ -101,7 +103,7 @@ chmod 700 ~/.config/openstack
 # Securely transfer your existing clouds.yaml to ~/.config/openstack/clouds.yaml.
 chmod 600 ~/.config/openstack/clouds.yaml
 export OS_CLOUD=CIS262089_IU
-/workspace/js2-control/bin/openstack server show b9f2a4a2-4077-46a6-aa5f-bf36ee299161 -c name -c status
+/workspace/js2-control/bin/openstack server show 195e6a8f-8ae1-45be-bcd7-7845b0b2419f -c name -c status
 ```
 
 This control environment is separate from the pinned SAM environment. Do not commit credentials. Confirm the response names csci567-sam. If the cloud name differs in your credential file, use that name. The runner checks credentials before starting work. Setup/access failures before that check cannot self-shelve: use `~/bin/js2 stop csci567-sam` from WSL. The alternative `--leave-active` explicitly disables automatic shelving and requires someone to stop billing manually; it is unsuitable for an unattended overnight run.

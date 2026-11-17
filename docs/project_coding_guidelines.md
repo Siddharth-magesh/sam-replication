@@ -2,14 +2,13 @@
 
 Repo: `Siddharth-magesh/sam-replication`, a fork of `google-research/sam`. Goal: replicate SAM (Foret et al., ICLR 2021) on CIFAR-10 and test an alternative hypothesis. Read `docs/PROJECT_TRACKING.md` and `docs/NOTES.md` before doing anything. Follow these rules exactly; ask the user if a rule conflicts with the task.
 
-## Branches and PRs
-- `main` is never touched: no commits, no merges, no upstream syncs.
-- `repro` is the integration branch. Never commit or push to it directly.
-- For every task: `git checkout repro && git pull`, then `git checkout -b <type>/<short-name>` (`feat/`, `fix/`, `docs/`, `patch/`).
-- Open the PR against `repro` in **our fork**, never against upstream:
-  `gh pr create --repo Siddharth-magesh/sam-replication --base repro`
-- Do not merge your own PR. No force-push, no history rewriting.
-- One logical change per commit, imperative message (`patch: seed weight init from run_seed`). Changes to the authors' code go in their own commits.
+## Branches and publication
+
+- User-directed workflow (2026-11-17): keep `repro` as the sole branch and GitHub default. Work on the existing `repro` checkout; do not create feature branches or PRs unless the user requests them again.
+- The user explicitly authorized consolidating the prepared Jetstream work into `repro` and deleting the other branches after their commits are preserved there. This supersedes the earlier feature-branch/PR-only workflow.
+- Preserve existing work and executed result notebooks. Do not force-push or rewrite history.
+- Commit logical changes with imperative messages. Changes to the authors' code stay isolated and documented.
+- Push when authorized by the user; never include credentials, datasets or raw run artifacts.
 
 ## Layout (put files only here)
 ```

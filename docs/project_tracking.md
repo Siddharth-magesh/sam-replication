@@ -133,6 +133,8 @@ The report is 4 pages excluding references and appendix, in a standard conferenc
 
 ## 12. Changelog
 
+- **2026-11-17**: Per user direction, consolidate publication onto repro as the default/sole branch. Moved bootstrap into the WRN notebook before removing the superseded Colab smoke and raw scratch notebooks; preserved notebooks 01/02/03 byte-for-byte. Updated runner and runbook dependencies; no GPU execution.
+
 - **2026-11-17**: Added the user-requested detailed Jetstream runbook with file roles, commands, prerequisites, lifecycle/budget handling, recovery and a copyable chat handoff. Prepared feature-branch publication; remote execution remains (to verify).
 
 - **2026-11-17**: Added GitHub-ready Jetstream Python/tmux launchers reusing notebook code, with explicit execution, fixed csci567-sam identity, full-A100 guard, persistent storage, ledger import, wall deadline, resume/report paths and optional explicit opt-out from automatic shelving. Remote operation remains (to verify); no training launched by this packaging task.
@@ -154,6 +156,8 @@ The report is 4 pages excluding references and appendix, in a standard conferenc
 - **2026-10-20**: Tracker created. Environment working on Colab T4, SAM and SGD smoke tests passed, code findings documented, shared notebook prepared. A100 setup and first real reproduction not yet started.
 
 ## 13. AI-usage log (for the appendix statement)
+
+- **2026-11-17**: Codex consolidated notebook dependencies and repository branches at user request, retained completed outputs and historical findings, and validated the runnable entry points without training.
 
 - **2026-11-17**: Codex documented the complete Jetstream workflow and prepared the requested launcher/notebook/runbook publication. No GPU run or new research conclusion.
 
