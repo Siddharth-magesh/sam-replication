@@ -108,7 +108,9 @@ def execute(args, root):
                      RUN_SETUP=args.setup, RUN_PREFLIGHT=args.phase == 'preflight',
                      RUN_TRAINING=args.phase == 'train', RENDER_RESULTS=False,
                      RUN_SELECTION=args.selection, RESUME_EXISTING=args.resume,
+                     RUN_DIAGNOSTIC_SMOKE=args.phase == 'smoke',
                      DIAGNOSTIC_ONLY=args.diagnostic_only)
+    namespace['CONFIG']['mode'] = 'smoke' if args.phase == 'smoke' else 'replication'
     namespace['CONFIG'].update(budget_file=str(namespace['BUDGET_FILE']),
                               repo=str(namespace['REPO']), session=str(session),
                               data_dir=str(namespace['DATA_DIR']),
@@ -129,7 +131,7 @@ def execute(args, root):
     exec(cell(main, 'WORKER_SOURCE ='), namespace)
     exec(cell(main, 'def budget_snapshot():'), namespace)
     exec(cell(main, 'def selected_runs():'), namespace)
-    if args.phase == 'train':
+    if args.phase in ('train', 'smoke'):
         exec(cell(main, 'if RUN_TRAINING:\n'), namespace)
     if args.phase in ('train', 'report'):
         render = cell(main, 'if RENDER_RESULTS:\n')
@@ -147,7 +149,7 @@ def execute(args, root):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('phase', choices=['preflight', 'train', 'report'])
+    parser.add_argument('phase', choices=['preflight', 'smoke', 'train', 'report'])
     parser.add_argument('--execute', action='store_true', help='Required to install or run anything.')
     parser.add_argument('--setup', action='store_true', help='Install/repair pinned environment before preflight.')
     parser.add_argument('--work-root', type=Path, default=Path('/workspace/sam_paper_replication'))
@@ -165,7 +167,11 @@ def main():
     assert 0 < args.max_hours <= 40
     assert not args.setup or args.phase == 'preflight', '--setup is only for preflight.'
     assert not args.diagnostic_only or args.phase == 'preflight', '--diagnostic-only is only for preflight.'
-    assert args.phase == 'preflight' or args.session, 'Specify the preflight SESSION for train/report.'
+    assert args.phase == 'smoke' or args.phase == 'preflight' or args.session, 'Specify the preflight SESSION for train/report.'
+    assert not args.resume or args.phase == 'train', '--resume is only for full training.'
+    if args.phase == 'smoke':
+        assert args.selection == 'all', 'The smoke phase always runs SGD-200 and SAM-200 for seed 0.'
+        assert not args.setup and not args.diagnostic_only, 'Smoke does not combine with setup or numerical-only diagnostics.'
     if not args.execute:
         print('PLAN ONLY. Target: csci567-sam, full A100 40 GB; phase:', args.phase)
         print('No installation, network, GPU execution or shelving. Add --execute to run.')

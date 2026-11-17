@@ -24,7 +24,7 @@ The runner imports the original SAM code at pinned fork commit `f7b9ff46ee0deab8
 
 ## 2. Current readiness: do not skip this
 
-- The combined T4 smoke did **not** pass. SGD passed ten updates, finite losses, parameter changes, BatchNorm checks, evaluation and checkpoint restoration at steps 5 and 10.
+- The historical T4 smoke did **not** pass. SGD passed ten updates, finite losses, parameter changes, BatchNorm checks, evaluation and checkpoint restoration; SAM exhausted T4 memory. The Jetstream `smoke` phase is a separate one-epoch functional test and does not replace strict preflight.
 - SAM ran out of GPU memory at the eight-logical-replica diagnostic on T4, including after discarded comparison buffers were freed.
 - The original pmap step itself varied between repeated calls on the same input. The smoke records numerical equivalence as inconclusive when its reference is not repeatable; functional success is not numerical proof. The main A100 preflight retains the strict numerical gate.
 - A legacy checkpoint error was fixed by serializing the completed-epoch marker as a Python int instead of numpy.int32.
@@ -120,7 +120,18 @@ The 45-minute launcher limit includes setup; at the guide's full-A100 rate of 64
 
 The launcher prints `SESSION=/workspace/sam_paper_replication/runs/...` to its log. Preserve this exact folder. Both strict preflights must finish successfully. The T4 equivalence warning does not bypass the A100 gate. If either fails, inspect the log; do not start training. Use a fresh session after a code change while keeping the same ledger.
 
-For a bounded one-replica harness diagnostic after a code change, use one selected method and stop before the eight-replica/full-epoch checks:
+For a bounded one-epoch functional smoke on the full A100, use the separate `smoke` phase. It runs fresh seed-0 SGD-200 and SAM-200, preserves the original eight logical sub-batches and optimizer step, records finite losses/updates, epoch time, sampled GPU memory, and checkpoint restoration, and never creates a preflight pass:
+
+```bash
+export OS_CLOUD=CIS262089_IU
+bash experiments/start_jetstream.sh smoke --execute \
+  --selection all --max-hours 0.5 \
+  --openstack-bin /workspace/js2-control/bin/openstack
+```
+
+Inspect both `smoke/SGD-200_seed_0/smoke.json` and `smoke/SAM-200_seed_0/smoke.json`. A complete smoke is functional evidence only; it does not authorize `train`, bypass numerical verification, or certify the reproduction. It uses the same authoritative ledger and automatic shelving.
+
+For a bounded one-replica numerical harness diagnostic after a code change, use one selected method and stop before the eight-replica/full-epoch checks:
 
 ```bash
 bash experiments/start_jetstream.sh preflight --execute --diagnostic-only \

@@ -82,6 +82,8 @@ The one-replica verifier now snapshots independent copies of optimizer, BatchNor
 
 Only server csci567-sam, UUID 195e6a8f-8ae1-45be-bcd7-7845b0b2419f, is accepted, verified using the instance metadata service. The last inspected flavor was g3.medium (10 GB A100 slice); the runner requires a full 40 GB A100 because the unchanged eight-replica SAM already exhausted T4 memory. Do not delete/recreate or resize another team's instance. Arrange the hardware change separately; partial-to-full GPU driver compatibility is (to verify). SSH access, full A100 numerical preflight, runtime, tmux execution and automatic shelving with this runner remain (to verify). Python 3.8 syntax, shell syntax, notebook selectors and plan-only CLI checks passed. These checks are not GPU validation.
 
+The Jetstream `smoke` phase is a separate bounded functional test. It runs one complete 195-batch epoch for fresh seed-0 SGD-200 and SAM-200 using the original mapped training step, eight logical sub-batches, and the fixed 200-epoch schedule; it records finite losses, parameter changes, epoch runtime, sampled `nvidia-smi` memory, and save/restore evaluation. It does not run or satisfy the strict numerical preflight, does not produce a preflight pass, and does not authorize full training. Smoke time remains charged to the same cumulative ledger and the normal instance identity and auto-shelving guards remain active.
+
 ### Before starting
 
 Use the consolidated `repro` branch. Log into **csci567-sam** and clone on the volume:

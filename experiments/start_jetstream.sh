@@ -2,7 +2,7 @@
 # Run on csci567-sam. tmux keeps the job alive after SSH/laptop disconnection.
 set -euo pipefail
 if [[ $# -eq 0 ]]; then
-  echo 'Usage: bash experiments/start_jetstream.sh preflight|train|report [runner options]'
+  echo 'Usage: bash experiments/start_jetstream.sh preflight|smoke|train|report [runner options]'
   exit 2
 fi
 directory="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
