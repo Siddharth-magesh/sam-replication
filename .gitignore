@@ -20,3 +20,5 @@ clouds.yml
 gpu_budget.json
 authoritative_gpu_budget.json
 cifar-10-*.tar.gz
+
+experimental_results/

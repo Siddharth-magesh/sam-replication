@@ -114,6 +114,7 @@ One full comparison (SAM, SGD-200, SGD-400) is roughly 12 to 16 A100-hours. The 
 | 12 | WRN-28-10 replication notebook: selected-run budget, paired inference and predeclared reproduction rule | Code lead | Nov 16 | L4 ten-batch SGD and SAM functional smoke passed (user-supplied output); earlier T4 SAM OOM retained. Checkpoint metadata fixed; A100 strict preflight and reproduction outcome (to verify); no full training run |
 
 | 13 | Jetstream background launcher for csci567-sam | Code lead | Nov 18 | Both full A100 preflights passed in 20261118_143021. Estimated pair 60.04 h exceeds remaining 38.03 h; no main training. Colab code/settings match; performance breakdown (to verify). Instance turned off by user. |
+| 14 | Colab ten-epoch measured timing pilot | Code lead | Nov 18 | Three supplied L4 attempts failed during setup; no training. Fixed cuDNN metadata guard in clean notebook, validated GPU snippet and added early syntax checks. Existing-environment reuse verified with mocks; ten-epoch completion/timing/accuracy (to verify). Executed notebook and failure logs preserved. |
 
 Owners marked TBD should be filled in at the next meeting. Each task should have exactly one owner, even if several people help.
 
@@ -132,6 +133,10 @@ Owners marked TBD should be filled in at the next meeting. Each task should have
 The report is 4 pages excluding references and appendix, in a standard conference template. The appendix must contain extra plots, hyperparameters, failed attempts, a link to our code, a short statement of who did what, and a statement of how AI tools were used. We are allowed to use AI tools to understand the paper, debug code, and polish writing, but not to generate the analysis or conclusions, and every member must be able to explain the report if the TAs ask. To make the appendix statement easy, **each member should keep a running note of where they used AI help** (which task, which tool), added to the bottom of this file. Report failed runs and changed plans honestly, and do not adjust the experiment after seeing results to make it say something. Check-in and report-review milestones are not graded separately, but groups that skip them rarely do well, so everyone should come prepared.
 
 ## 12. Changelog
+
+- **2026-11-18**: Audited three user-run Colab setup failures (9.37 recorded minutes, no training). Fixed erroneous cuDNN version check; identified network timeout and malformed snippet in executed copy. Added pre-setup syntax guards/failure timing and validated environment reuse without changing training or saved evidence. GPU rerun (to verify).
+
+- **2026-11-18**: Prepared self-contained Colab notebook 05 for ten epochs per method, preserving original SAM/SGD and 200-epoch schedule. Added real timing/live memory measurements, explicit runtime profiles, Drive cache/checkpoint recovery and cumulative pilot accounting. Execution disabled, outputs cleared; GPU run (to verify). Previous notebooks untouched.
 
 - **2026-11-18**: Recorded both full A100 preflight passes, measured timing/memory and budget mismatch. Audited executed Colab notebook: same original update/settings, ten batches only, post-exit memory reading. Replaced speculative run_config runtime table; no new GPU work or training-code change.
 
@@ -174,6 +179,10 @@ The report is 4 pages excluding references and appendix, in a standard conferenc
 - **2026-10-20**: Tracker created. Environment working on Colab T4, SAM and SGD smoke tests passed, code findings documented, shared notebook prepared. A100 setup and first real reproduction not yet started.
 
 ## 13. AI-usage log (for the appendix statement)
+
+- **2026-11-18**: Codex inspected supplied Colab failures, compared executed/clean source, corrected setup validation, and used actual saved metadata plus local mocks to check repair/reuse behavior. No new GPU work or research results; original executed artifacts preserved.
+
+- **2026-11-18**: Codex packaged the requested measured Colab pilot from the original implementation and earlier smoke settings; checked Python/JSON/configuration and mocked host-side orchestration. No packages installed, datasets downloaded, GPU jobs started or research conclusions generated. Runtime results (to verify).
 
 - **2026-11-18**: Codex used authorized js2 SSH access to run the bounded preflight on csci567-sam only, then stopped monitoring at user request. Later audited saved Colab code and buffered completion output, distinguished measured data from performance hypotheses, and corrected runtime documentation.
 
