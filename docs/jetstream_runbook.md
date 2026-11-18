@@ -2,6 +2,30 @@
 
 ## Current first comparison: follow run_config.md
 
+### Current debugging mode: foreground Python, keep the instance connected
+
+The latest supplied `20261118_071943` run still failed the original-reference repeatability gate with `TF_CUDNN_DETERMINISTIC=1`. Main training has not started. The subsequent SSH disconnection was the launcher's deliberate automatic shelving, not evidence that tmux killed the worker. Do not reinstall packages or repeatedly retry the unchanged numerical check.
+
+For a future attended attempt, use the existing Python entry point directly with `--leave-active`, instead of the detached shell launcher. This keeps the VM active on success, failure or handled interruption and does not require cloud-control credentials for shelving:
+
+```bash
+cd /workspace/sam-replication
+python3 -u experiments/cifar10_first_comparison/run.py comparison \
+  --execute --leave-active --deterministic-cudnn \
+  --max-hours 24 --record-l4-smoke
+```
+
+This is the foreground launch syntax, **not a fix for the outstanding numerical failure**. Do not start a duplicate while another worker is running. The 24-hour invocation and cumulative worker-time limits remain; `--leave-active` disables cloud shelving only. A failed Python command returns to your SSH prompt; saved logs and diagnostic JSON remain in the printed SESSION. A foreground run is tied to the SSH terminal: keep it connected. To make that same command survive laptop disconnection, enter `tmux new -s sam-debug` first, run it there, and detach with Ctrl-b then d; the shell remains available after Python exits.
+
+An active/idle VM continues consuming allocation even after Python exits; the worker ledger does not include that idle time. When no work remains, run from WSL:
+
+```bash
+js2 stop csci567-sam
+js2 status csci567-sam
+```
+
+Confirm SHELVED_OFFLOADED. The unattended single-job workflow below still auto-shelves unless `--leave-active` is explicitly supplied; reserve it for after the numerical failure has been resolved.
+
 **For the already-installed csci567-sam, use the single-job commands immediately below.** Steps A–F are the alternative staged/reference workflow. Commands labelled WSL run on your laptop; commands labelled instance run after connecting to csci567-sam. Do not run the later nine-run examples for this first comparison.
 
 ### Installed instance: preflight → SAM-200 → SGD-200 in one job
