@@ -2,6 +2,21 @@
 
 ## Current first comparison: follow run_config.md
 
+**Latest state:** `20261118_072652` again failed the numerical gate; `--leave-active` correctly kept SSH open. Do not repeat the full comparison while that issue is unresolved. The diagnostic has now been tightened to warm both transforms before measurement, reuse the same prepared reference inputs across calls, and verify input immutability. This tests a possible harness/first-execution effect; it is not a claimed resolution or a tolerance change.
+
+For one bounded, attended **SGD diagnostic only**, on the instance:
+
+```bash
+cd /workspace/sam-replication
+git switch repro
+git pull --ff-only origin repro
+python3 -u experiments/jetstream_wrn.py preflight --execute \
+  --diagnostic-only --selection SGD-200_seed_0 \
+  --deterministic-cudnn --leave-active --max-hours 0.1
+```
+
+This uses the installed environment/cache, has a six-minute invocation cap, runs neither an epoch nor main training, and leaves the machine connected. The diagnostic-only dispatcher now runs exactly the selected method. Print the new SESSION's `preflight/SGD-200_seed_0/diagnostics.json`; the report records `reference_protocol=warmed_same_prepared_inputs_v1` and `input_integrity`. A completed diagnostic-only process is not a passed preflight. Keep earlier reports; no old failure is overwritten. If idle afterward, manually shelve as below.
+
 ### Current debugging mode: foreground Python, keep the instance connected
 
 The latest supplied `20261118_071943` run still failed the original-reference repeatability gate with `TF_CUDNN_DETERMINISTIC=1`. Main training has not started. The subsequent SSH disconnection was the launcher's deliberate automatic shelving, not evidence that tmux killed the worker. Do not reinstall packages or repeatedly retry the unchanged numerical check.
@@ -26,11 +41,11 @@ js2 status csci567-sam
 
 Confirm SHELVED_OFFLOADED. The unattended single-job workflow below still auto-shelves unless `--leave-active` is explicitly supplied; reserve it for after the numerical failure has been resolved.
 
-**For the already-installed csci567-sam, use the single-job commands immediately below.** Steps A–F are the alternative staged/reference workflow. Commands labelled WSL run on your laptop; commands labelled instance run after connecting to csci567-sam. Do not run the later nine-run examples for this first comparison.
+**The single-job commands below are for after the numerical issue is resolved. Use the bounded diagnostic above for now.** Steps A–F are the alternative staged/reference workflow. Commands labelled WSL run on your laptop; commands labelled instance run after connecting to csci567-sam. Do not run the later nine-run examples for this first comparison.
 
 ### Installed instance: preflight → SAM-200 → SGD-200 in one job
 
-**Current correction: add `--deterministic-cudnn` to the commands below.** Saved diagnostic `20261118_070302` shows identical inputs but a 5.55% optimizer-state relative difference between two original reference calls (wrapper/reference: 5.49%). Numerical equivalence remains inconclusive; do not reuse that failed session. The new option sets `TF_CUDNN_DETERMINISTIC=1` for preflight and both training methods, records it in CONFIG/manifest, and rejects a worker whose environment differs. It does not relax numerical or BatchNorm gates, alter SAM/SGD hyperparameters, or install anything. Use a fresh session and retain the same option on resume/report. Actual A100 resolution is **(to verify)**.
+**Recorded runtime option: `--deterministic-cudnn` did not resolve the failure in subsequent supplied runs.** Saved diagnostic `20261118_070302` shows identical inputs but a 5.55% optimizer-state relative difference between two original reference calls (wrapper/reference: 5.49%). Numerical equivalence remains inconclusive; do not reuse that failed session. The option sets `TF_CUDNN_DETERMINISTIC=1` for preflight and both training methods, records it in CONFIG/manifest, and rejects a worker whose environment differs. It does not relax numerical or BatchNorm gates, alter SAM/SGD hyperparameters, or install anything. Use a fresh session and retain the same option on resume/report. Actual A100 resolution is **(to verify)**.
 
 Source verification: [jaxlib 0.1.57 WORKSPACE](https://github.com/jax-ml/jax/blob/jaxlib-v0.1.57/WORKSPACE) pins TensorFlow/XLA commit `4cf039a9877a5e7a73cf3bc189af0bd03d2cb422`. Its [cuDNN backend](https://github.com/tensorflow/tensorflow/blob/4cf039a9877a5e7a73cf3bc189af0bd03d2cb422/tensorflow/stream_executor/cuda/cuda_dnn.cc) reads this variable and excludes nondeterministic backward algorithms; the [XLA convolution picker](https://github.com/tensorflow/tensorflow/blob/4cf039a9877a5e7a73cf3bc189af0bd03d2cb422/tensorflow/compiler/xla/service/gpu/gpu_conv_algorithm_picker.cc) also honors it. This is a supported legacy runtime control, not an assumed modern XLA flag. Record this execution-setting deviation in results; it can change performance and numerics.
 

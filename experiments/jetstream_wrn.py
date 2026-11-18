@@ -149,7 +149,7 @@ def execute(args, root):
                      PYTHON=root / 'envs' / 'sam' / 'bin' / 'python',
                      REPO=root / 'work' / 'sam', SESSION=session,
                      DATA_DIR=root / 'tensorflow_datasets', BUDGET_FILE=root / 'gpu_budget.json',
-                     RUN_SETUP=args.setup, RUN_PREFLIGHT=args.phase in ('preflight', 'comparison'),
+                     RUN_SETUP=args.setup, RUN_PREFLIGHT=args.phase in ('preflight', 'comparison') and not args.diagnostic_only,
                      RUN_TRAINING=args.phase == 'train', RENDER_RESULTS=False,
                      RUN_SELECTION=args.selection, RESUME_EXISTING=args.resume,
                      RUN_DIAGNOSTIC_SMOKE=args.phase == 'smoke',
@@ -177,6 +177,12 @@ def execute(args, root):
         exec(cell(main, 'def setup_command(command, environment=None):'), namespace)
     exec(cell(main, 'WORKER_SOURCE ='), namespace)
     exec(cell(main, 'def budget_snapshot():'), namespace)
+    if args.diagnostic_only:
+        assert args.selection in ('SGD-200_seed_0', 'SAM-200_seed_0'), 'Diagnostic-only must select one seed-0 method.'
+        method = args.selection.rsplit('_seed_', 1)[0]
+        namespace['launch']('preflight', method, 0)
+        print('Diagnostic finished. This does not authorize training; inspect SESSION/preflight/' + args.selection + '/diagnostics.json', flush=True)
+        return session
     exec(cell(main, 'def selected_runs():'), namespace)
     if args.phase == 'comparison':
         selections = ['SAM-200_seed_0', 'SGD-200_seed_0']
@@ -232,6 +238,7 @@ def main():
     assert 0 < args.max_hours <= 40
     assert not args.setup or args.phase in ('preflight', 'comparison'), '--setup is only for preflight/comparison.'
     assert not args.diagnostic_only or args.phase == 'preflight', '--diagnostic-only is only for preflight.'
+    assert not args.diagnostic_only or args.selection in ('SGD-200_seed_0', 'SAM-200_seed_0'), 'Choose one seed-0 method for diagnostic-only.'
     assert args.phase in ('smoke', 'preflight', 'comparison') or args.session, 'Specify the preflight SESSION for train/report.'
     assert not args.resume or (args.phase in ('train', 'comparison') and args.session), '--resume requires a training phase and the original session.'
     if args.phase == 'smoke':
