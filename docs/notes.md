@@ -1,3 +1,9 @@
+## L4 functional smoke result (November 17, 2026 local time)
+
+User-supplied output reports both ten-batch SGD and SAM smoke tests passed on Colab L4 using the pinned original implementation and eight sub-batches of 32. Model initialization reported 36,220,634 finite parameters. Result folder: `smoke_20261118_043333_653758` (UTC name). The checks covered finite metrics/state, parameter and BatchNorm updates, evaluation, checkpoint restoration and identical initial-weight hashes. Recorded worker time was 0.32108525306166674 hours; SGD 13.56 minutes included initial CIFAR download/preparation, SAM 5.70 minutes reused it. These are not comparative training-speed measurements. Actual raw result files and backup completeness remain (to verify); the outcome is recorded from user-provided console output.
+
+The standalone diagnostic needed two harness fixes: check jaxlib's CUDA suffix using package metadata (module __version__ is 0.1.57), and parse Abseil flags before model initialization. The main notebook already implements the compatible module check and flag parsing; no training-code changes were needed. L4 CUDA compiler warnings fell back to the driver and did not prevent functional success. Strict A100 preflight, numerical equivalence and shelving remain (to verify). The standalone attempts.json has not yet been reconciled into the authoritative 40-hour ledger; preserve earlier failed initialization attempts as well.
+
 ## Code findings (`train.py`, `flax_training.py`, models, datasets)
 
 ### Flags and defaults that differ from the paper

@@ -2,6 +2,10 @@
 
 ## Current first comparison: follow run_config.md
 
+**Start here and follow steps A–F in order.** Commands labelled WSL run on your laptop; commands labelled instance run after connecting to csci567-sam. Do not run the later nine-run examples for this first comparison.
+
+Latest evidence (November 17, 2026 local time): the user-run Colab L4 test reported **both SGD and SAM functional smoke tests passed**, ten batches each at batch 256 / eight sub-batches. It checked finite losses/state, parameter and BatchNorm updates, evaluation, checkpoint restoration and shared initial weights. Recorded time was **0.32108525306166674 hours (19.27 minutes)**, including data preparation and compilation. SGD's 13.56 minutes versus SAM's 5.70 minutes is not a speed comparison: SGD downloaded/prepared CIFAR first. A100 strict numerical preflight and unattended shelving remain **(to verify)**.
+
 The current user-selected scope is **SAM-200 seed 0, then SGD-200 seed 0**. No extra seeds or SGD-400 yet. This section supersedes the full-nine-run launch examples below; that larger experiment remains available for later work. Use branch **repro**. No Jetstream instance was started for this packaging change.
 
 Only four new files are needed in `experiments/cifar10_first_comparison/`:
@@ -19,14 +23,77 @@ Environment: no Windows venv is created. `preflight --setup` creates or repairs 
 
 Before execution, complete the existing storage, cloud-control credential and authoritative-ledger prerequisites in sections 4–5 below. Confirm **csci567-sam** and a full A100 40 GB; a 10 GB slice is rejected. No script resizes or creates a VM. Ensure `OS_CLOUD` identifies your existing credential configuration. Cloud credentials stay outside Git. Import the latest authoritative ledger, including any later Jetstream attempts; do not replace it with an older Colab copy or a fresh zero ledger.
 
-On csci567-sam:
+### A. Connect to the right machine — WSL terminal
+
+Check the instance and course allocation before allocating GPU time. Only this instance is authorized. The guide quotes 64 SUs/hour for the required full A100: the first 45-minute invocation is approximately 48 SUs plus startup/shelving time. A 10 GB slice will be rejected; do not resize or substitute another machine through these instructions.
 
 ```bash
+~/bin/js2 status csci567-sam
+```
+
+If SHELVED, and you are ready to run the bounded preflight, start it. Skip the start command if already ACTIVE:
+
+```bash
+~/bin/js2 start csci567-sam
+~/bin/js2 gpus csci567-sam
+~/bin/js2 ssh csci567-sam
+```
+
+### B. Clone and select repro — instance terminal
+
+For a **new checkout**:
+
+```bash
+mountpoint /workspace
+nvidia-smi
+# Stop here if /workspace is not mounted or the GPU is not a full A100 40 GB.
 cd /workspace
-git clone --branch repro https://github.com/Siddharth-magesh/sam-replication.git
+git clone --branch repro https://github.com/Siddharth-magesh/sam-replication.git sam-replication
 cd sam-replication
-# If already cloned, inspect git status and use git pull --ff-only on repro instead.
+git switch repro
+git branch --show-current
+git log -1 --oneline
+```
+
+For an **existing checkout**, use this instead of cloning again:
+
+```bash
+cd /workspace/sam-replication
+git status --short
+```
+
+If this prints local changes, preserve/review them before continuing; do not reset or overwrite them. When clean:
+
+```bash
+git fetch origin
+git switch repro
+git pull --ff-only origin repro
+git branch --show-current
+git log -1 --oneline
+```
+
+The branch output must be `repro`. Keep this exact code revision throughout preflight and training. Do not pull updates midway through a session.
+
+### C. Prepare cloud control and inputs — instance terminal
+
+Complete the credential setup in section 5 before running a GPU job. It creates the separate `/workspace/js2-control` environment; the SAM environment is created later by `--setup`.
+
+```bash
+mkdir -p /workspace/sam_inputs
 export OS_CLOUD=CIS262089_IU  # Use the cloud name in your existing credentials.
+/workspace/js2-control/bin/openstack server show \
+  195e6a8f-8ae1-45be-bcd7-7845b0b2419f -c name -c status
+```
+
+Confirm that the response names `csci567-sam`. Securely transfer the authoritative `gpu_budget.json` and optional verified `cifar-10-binary.tar.gz` into `/workspace/sam_inputs/`. A prepared TFDS cache can instead be copied to `/workspace/sam_paper_replication/tensorflow_datasets/`, preserving its directory structure. Do not upload the Colab Python environment.
+
+**Budget prerequisite:** the standalone L4 `attempts.json` is evidence, not a replacement for the authoritative supervisor ledger. Reconcile its 0.32108525306166674 hours and other unrecorded diagnostic attempts into that ledger before importing it. Do not import the old 0.8683-hour Colab handoff as though it includes the new L4 run. If reconciliation is not done, stop here; the automatic supervisor cannot account for missing external attempts. Live total remains **(to verify)**.
+
+### D. Setup and preflight only — instance terminal
+
+```bash
+cd /workspace/sam-replication
+export OS_CLOUD=CIS262089_IU
 python3 experiments/cifar10_first_comparison/run.py preflight  # safe plan-only check
 bash experiments/cifar10_first_comparison/start.sh preflight --execute --setup \
   --ledger-import /workspace/sam_inputs/gpu_budget.json \
@@ -38,7 +105,9 @@ The archive argument is optional if the existing TFDS cache is complete or norma
 
 Copy the printed `SESSION=...` path. Both preflights must pass. Read the measured per-method estimates, the remaining worker budget and the live course allocation. For the first comparison add only the SAM-200 and SGD-200 estimates, not nine runs. Each training invocation independently checks its selected remaining work against the shared ledger. Do not bypass a failed numerical gate or treat the old 5–11 / 3–6 hour guesses as measurements.
 
-After reviewing the measured costs and starting the same instance again if shelved:
+### E. Run SAM, then SGD — only after preflight passes
+
+After reviewing the measured costs and starting the same instance again if shelved, reconnect using step A. Set `APPROVED_HOURS` to the measured, reviewed wall-time limit for the specific method (for example, enter `export APPROVED_HOURS=...` with your actual reviewed number; do not type the dots). Then, on the instance:
 
 ```bash
 cd /workspace/sam-replication
@@ -58,15 +127,32 @@ bash experiments/cifar10_first_comparison/start.sh sgd --execute \
 
 SGD refuses to start until SAM's status is complete in that session. Add `--resume` to the same SAM/SGD command after interruption; keep the same session, code, environment and authoritative ledger. The last fully committed epoch is restored. Each command is a separate job; SGD is not automatically launched after shelving. `tmux attach -t sam-wrn` shows output; Ctrl-b then d detaches. Closing the laptop does not stop tmux. Inspect `/workspace/sam_paper_replication/launcher_logs/first_comparison_*.log` and the launcher receipt. Pre-launch failures can occur before auto-shelving is armed: check the log promptly and verify SHELVED_OFFLOADED from WSL/Exosphere after completion/failure. Do not assume Linux shutdown stops billing.
 
+### F. Inspect results and verify shelving
+
 Each successful training phase generates the existing `SESSION/summary/test_error_curves.png` and `final_per_seed.csv`. After **both** runs finish, this read-only command prints the compact comparison (also works on downloaded results with system Python):
 
 ```bash
 python3 experiments/cifar10_first_comparison/report.py "$SESSION"
 ```
 
+From **WSL**, verify the final machine state:
+
+```bash
+~/bin/js2 status csci567-sam
+```
+
+If still ACTIVE and your job has ended with no other work running, release it:
+
+```bash
+~/bin/js2 stop csci567-sam
+~/bin/js2 status csci567-sam
+```
+
+Confirm SHELVED_OFFLOADED. Do not delete the instance or volume. Results persist on `/workspace`; retrieve them when connected and preserve the authoritative ledger with them.
+
 Report epoch-200 error, the gap from SAM 2.7% / SGD 3.5%, and SGD-200 minus SAM in percentage points. One seed provides no SD/CI, and paper SGD is the better of 200/400 epochs. The notebook's full reproduction assessment correctly remains incomplete with only two of nine planned runs; this is not a failed first-comparison job or a claim of full reproduction.
 
-Validation for this package: Python 3.8 syntax, JSON/configuration and no-execution CLI checks are performed locally. Colab validation **(to verify)**: WSL access was rejected by the approval control before the CLI could check authentication; no retry or session creation was attempted. Full A100 preflight, legacy GPU compatibility, eight-sub-batch SAM memory fit and unattended cloud lifecycle remain **(to verify)**. Earlier T4 SAM OOM and Jetstream initialization failures remain unresolved evidence, not successful validation.
+Validation for this package: Python 3.8 syntax, JSON/configuration and no-execution CLI checks passed locally. The subsequent user-run L4 functional smoke passed as described above. Full A100 preflight, numerical equivalence, A100 memory fit and unattended cloud lifecycle remain **(to verify)**. Earlier T4 SAM OOM and Jetstream initialization failures remain recorded; an L4 pass does not resolve the A100-specific findings.
 
 Updated: November 17, 2026. Read this entire document before running GPU commands.
 
@@ -170,7 +256,7 @@ export OS_CLOUD=CIS262089_IU
 
 This control environment is separate from the pinned SAM environment. Do not commit credentials. Confirm the response names csci567-sam. If the cloud name differs in your credential file, use that name. The runner checks credentials before starting work. Setup/access failures before that check cannot self-shelve: use `~/bin/js2 stop csci567-sam` from WSL. The alternative `--leave-active` explicitly disables automatic shelving and requires someone to stop billing manually; it is unsuitable for an unattended overnight run.
 
-Transfer the existing authoritative `gpu_budget.json` and verified `cifar-10-binary.tar.gz` into `/workspace/sam_inputs/` using your secure file-transfer method. These are inputs for migrating this experiment, not a whole-tree results upload. Do not put either in Git or start a zero ledger. Local handoff: `C:/Users/Siddharth Magesh/AppData/Local/Temp/sam_main_machine_handoff/`. The carried ledger has 0.8682869146 worker GPU-hours charged; Jetstream allocated idle/setup time is additional SU usage and is not represented by that ledger.
+Transfer the existing authoritative `gpu_budget.json` and verified `cifar-10-binary.tar.gz` into `/workspace/sam_inputs/` using your secure file-transfer method. These are inputs for migrating this experiment, not a whole-tree results upload. Do not put either in Git or start a zero ledger. Local handoff: `C:/Users/Siddharth Magesh/AppData/Local/Temp/sam_main_machine_handoff/`. That historical handoff ledger has 0.8682869146 worker GPU-hours charged and excludes the later L4 smoke and subsequent attempts; reconcile it before use. Jetstream allocated idle/setup time is additional SU usage and is not represented by that ledger.
 
 ## 6. First run: setup and preflight only
 
