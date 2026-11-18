@@ -1,3 +1,11 @@
+## Reduced 50-epoch JS2 comparison prepared (November 18)
+
+User explicitly reduced the first comparison to 50 epochs each. Added `experiments/cifar10_wrn28x10_sam_sgd_50epochs_seed0/` with a standalone Python launcher, original notebook-derived worker, launch helpers, budget supervisor, result renderer and the requested short `instructions.md` in that folder. SAM-50 then SGD-50, seed 0, cosine schedule spanning 50 epochs; all model/data/batch/eight-lane/optimizer settings retained. This is a reduced experiment, not reproduction of the 200-epoch paper numbers. Source diff is limited to duration/labels, one-seed contract and progress prints; original SAM/SGD and BN logic unchanged.
+
+Reuses `/workspace/sam_paper_replication` environment, pinned source, data cache and authoritative ledger. No install/repair, external file imports or cloud-control credentials required. Strict preflight is retained for the new schedule/configuration and both reports must pass before training. Estimate checks only the remaining two 50-epoch runs; prior timing suggests about 15 hours plus preflight, not a measured runtime. Default invocation cap 18 hours; supervisor independently enforces it and the remaining cumulative 40-hour allowance, with checkpoint resume and conservative crash reservations. Imports the three supplied Colab failure charges once by ID (0.1561314478 hours), without reimporting the prior baseline. No automatic shelving on success or failure; use Python in tmux to survive SSH loss, then manually stop csci567-sam. No JS2 connection or training during preparation.
+
+Local Python 3.8 syntax and bounded worker-diff checks passed; dry-run entry point works without writes/network. New 50-epoch GPU execution and resulting accuracy/time **(to verify)**. Previous executed notebooks, logs and 200-epoch experiment are unchanged.
+
 ## Colab pilot setup failures inspected (November 18)
 
 Inspected user-supplied `05_wrn28_10_colab_10epoch_timing_exe.ipynb` and `colab_10epoch-20261118T172837Z-1-001/colab_10epoch`. All three attempts failed before training on NVIDIA L4 (23,034 MiB); no completed epochs, training timings, test accuracy or live training memory measurements exist in this bundle. Recorded attempts total 0.15613144777444446 h (9.3679 minutes), cumulative baseline plus attempts 2.1310015725113893 h. This excludes unrecorded idle allocation.
