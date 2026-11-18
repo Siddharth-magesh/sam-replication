@@ -113,7 +113,7 @@ One full comparison (SAM, SGD-200, SGD-400) is roughly 12 to 16 A100-hours. The 
 
 | 12 | WRN-28-10 replication notebook: selected-run budget, paired inference and predeclared reproduction rule | Code lead | Nov 16 | L4 ten-batch SGD and SAM functional smoke passed (user-supplied output); earlier T4 SAM OOM retained. Checkpoint metadata fixed; A100 strict preflight and reproduction outcome (to verify); no full training run |
 
-| 13 | Jetstream background launcher for csci567-sam | Code lead | Nov 17 | Warmed same-input diagnostic still inconclusive. Verified missing XLA reduction control in pinned compiler; added explicit recorded option and environment checks. Full training not started; A100 effect (to verify) |
+| 13 | Jetstream background launcher for csci567-sam | Code lead | Nov 18 | A100 SGD original-repeat/one-lane comparison now exactly matches with reduction control. Eight-lane BN gate failed against serial reference; corrected reference layout, retained measurements and limits. Full preflight/SAM/training (to verify) |
 
 Owners marked TBD should be filled in at the next meeting. Each task should have exactly one owner, even if several people help.
 
@@ -132,6 +132,8 @@ Owners marked TBD should be filled in at the next meeting. Each task should have
 The report is 4 pages excluding references and appendix, in a standard conference template. The appendix must contain extra plots, hyperparameters, failed attempts, a link to our code, a short statement of who did what, and a statement of how AI tools were used. We are allowed to use AI tools to understand the paper, debug code, and polish writing, but not to generate the analysis or conclusions, and every member must be able to explain the report if the TAs ask. To make the appendix statement easy, **each member should keep a running note of where they used AI help** (which task, which tool), added to the bottom of this file. Report failed runs and changed plans honestly, and do not adjust the experiment after seeing results to make it say something. Check-in and report-review milestones are not graded separately, but groups that skip them rarely do well, so everyone should come prepared.
 
 ## 12. Changelog
+
+- **2026-11-18**: Recorded exact A100 SGD one-lane numerical pass and subsequent BN failure. Matched independent clean-forward reference to eight-lane vmap layout, retained serial differences and unchanged limits, and added automatic failure-report output. No GPU rerun or training; full preflight (to verify).
 
 - **2026-11-17**: Audited pinned XLA source and found cuDNN determinism does not enable deterministic GPU reductions. Added explicit --deterministic-reductions, shared flag construction and provenance checks without changing original training or thresholds. Warmed diagnostic failure retained; A100 resolution (to verify). No remote execution.
 
@@ -170,6 +172,8 @@ The report is 4 pages excluding references and appendix, in a standard conferenc
 - **2026-10-20**: Tracker created. Environment working on Colab T4, SAM and SGD smoke tests passed, code findings documented, shared notebook prepared. A100 setup and first real reproduction not yet started.
 
 ## 13. AI-usage log (for the appendix statement)
+
+- **2026-11-18**: Codex inspected supplied BN diagnostics and the official pinned JAX batching source, corrected diagnostic layout and documented its scope. Used local static/control-flow checks; no GPU verification or replication result claimed.
 
 - **2026-11-17**: Codex traced the unresolved reference variation to a missing runtime control as a source-backed hypothesis, verified legacy compiler support, implemented explicit flag propagation and validated it locally. Did not claim GPU confirmation or launch training.
 

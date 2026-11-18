@@ -2,24 +2,26 @@
 
 ## Current first comparison: follow run_config.md
 
-**Latest state:** `20261118_073439` still failed reference repeatability after warm-up with unchanged inputs. Main training remains blocked. The source audit found that the previous cuDNN setting left XLA GPU reductions uncontrolled. Added explicit `--deterministic-reductions`, supported by the exact pinned compiler, and corrected the launcher path so the option survives XLA_FLAGS construction. This is a source-backed runtime correction; its effect on A100 is **(to verify)**. No packages, original training code or thresholds changed. See the pinned-source links in [notes.md](notes.md).
+**Latest state (November 18):** the reduction correction worked in supplied A100 diagnostic `20261118_141736`: original repeats and one-lane wrapper/reference differences were all zero. Full preflight `20261118_142008` passed that check and reached eight logical replicas, then stopped on BatchNorm. All eight updates were finite and independent; relative BN differences were about 1.2e-5, but absolute differences (up to 1.52588e-4) exceeded the 2e-5 limit. SAM preflight and main training have not started in this sequence.
 
-For one bounded, attended **SGD diagnostic only**, on the instance:
+The BN gate now compares the retained training state against an independent clean forward using the **same eight-lane vmap layout**, with original weights and states. The former serial-lane comparison used a different convolution batch shape; it remains recorded as `bn_serial_lanes`. The enforced `bn_lanes` limits stay 2e-5 absolute and 2e-4 relative. Actual A100 outcome **(to verify)**; no pass is inferred from the older small differences. Both full preflights must pass before training.
+
+On the already-installed instance, pull and run full preflight in a fresh session:
 
 ```bash
 cd /workspace/sam-replication
 git switch repro
 git pull --ff-only origin repro
 python3 -u experiments/jetstream_wrn.py preflight --execute \
-  --diagnostic-only --selection SGD-200_seed_0 \
-  --deterministic-cudnn --deterministic-reductions --leave-active --max-hours 0.1
+  --deterministic-cudnn --deterministic-reductions \
+  --leave-active --max-hours 0.75
 ```
 
-This uses the installed environment/cache, has a six-minute invocation cap, runs neither an epoch nor main training, and leaves the machine connected. The diagnostic-only dispatcher now runs exactly the selected method. The command now prints the diagnostic JSON automatically and saves it at the new SESSION's `preflight/SGD-200_seed_0/diagnostics.json`. Check for `--xla_gpu_deterministic_reductions=true` in the recorded runtime controls. It also records `reference_protocol=warmed_same_prepared_inputs_v1` and `input_integrity`. A completed diagnostic-only process is not a passed preflight. Proceed only after the report says `numerical_equivalence: passed`, `reference_repeatable: true` and `cross_transform_close: true`; both full method preflights remain mandatory before training. Keep both runtime options for the full comparison and on resume, and use a fresh session for this code revision. Keep earlier reports; no old failure is overwritten. If idle afterward, manually shelve as below.
+This reuses installed packages, cached data and the same budget ledger. It runs SGD and SAM preflights with eight-lane/BN checks, one epoch each, evaluation, checkpoint restoration and measured cost estimation. It does not start the 200-epoch runs. The 45 minutes is a cap, not a prediction. Failed workers now print saved diagnostics automatically. Keep the printed SESSION; do not reuse the failed session after a worker change. The machine stays active. Preserve both runtime options for later training/resume; do not reinstall or import an old ledger. Latest supplied charge: 1.656151276735556 / 40 hours.
 
 ### Current debugging mode: foreground Python, keep the instance connected
 
-The latest supplied `20261118_071943` run still failed the original-reference repeatability gate with `TF_CUDNN_DETERMINISTIC=1`. Main training has not started. The subsequent SSH disconnection was the launcher's deliberate automatic shelving, not evidence that tmux killed the worker. Do not reinstall packages or repeatedly retry the unchanged numerical check.
+The earlier supplied `20261118_071943` run failed the original-reference repeatability gate with `TF_CUDNN_DETERMINISTIC=1`. Main training has not started. The subsequent SSH disconnection was the launcher's deliberate automatic shelving, not evidence that tmux killed the worker. Do not reinstall packages or repeatedly retry the unchanged numerical check.
 
 For a future attended attempt, use the existing Python entry point directly with `--leave-active`, instead of the detached shell launcher. This keeps the VM active on success, failure or handled interruption and does not require cloud-control credentials for shelving:
 
