@@ -64,6 +64,7 @@ def main():
     parser.add_argument('--ledger-import', type=Path)
     parser.add_argument('--record-l4-smoke', action='store_true')
     parser.add_argument('--deterministic-cudnn', action='store_true', help='Request deterministic cuDNN algorithms in the pinned legacy XLA stack.')
+    parser.add_argument('--deterministic-reductions', action='store_true', help='Request deterministic GPU reductions in the pinned legacy XLA stack.')
     parser.add_argument('--check-inputs', action='store_true', help='Read-only filesystem checks before starting tmux.')
     parser.add_argument('--cifar-archive', type=Path)
     parser.add_argument('--max-hours', type=float, default=0.75)
@@ -105,7 +106,7 @@ def main():
         value = getattr(args, option)
         if value is not None:
             command.extend(['--' + option.replace('_', '-'), str(value)])
-    for option in ('execute', 'setup', 'resume', 'leave_active', 'record_l4_smoke', 'deterministic_cudnn'):
+    for option in ('execute', 'setup', 'resume', 'leave_active', 'record_l4_smoke', 'deterministic_cudnn', 'deterministic_reductions'):
         if getattr(args, option):
             command.append('--' + option.replace('_', '-'))
     print('First comparison: SAM-200 seed 0, then SGD-200 seed 0; no SGD-400 or extra seeds.', flush=True)

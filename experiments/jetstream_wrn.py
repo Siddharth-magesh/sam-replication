@@ -159,6 +159,7 @@ def execute(args, root):
                               repo=str(namespace['REPO']), session=str(session),
                               data_dir=str(namespace['DATA_DIR']),
                               cudnn_deterministic=cudnn_deterministic,
+                              deterministic_reductions=args.deterministic_reductions,
                               diagnostic_only=args.diagnostic_only)
     import_ledger(namespace['BUDGET_FILE'], args.ledger_import)
     if args.record_l4_smoke:
@@ -181,7 +182,10 @@ def execute(args, root):
         assert args.selection in ('SGD-200_seed_0', 'SAM-200_seed_0'), 'Diagnostic-only must select one seed-0 method.'
         method = args.selection.rsplit('_seed_', 1)[0]
         namespace['launch']('preflight', method, 0)
-        print('Diagnostic finished. This does not authorize training; inspect SESSION/preflight/' + args.selection + '/diagnostics.json', flush=True)
+        report = session / 'preflight' / args.selection / 'diagnostics.json'
+        print('Diagnostic report: ' + str(report), flush=True)
+        print(report.read_text(), flush=True)
+        print('Diagnostic finished. This does not authorize training; both full preflights are still required.', flush=True)
         return session
     exec(cell(main, 'def selected_runs():'), namespace)
     if args.phase == 'comparison':
@@ -230,6 +234,7 @@ def main():
     parser.add_argument('--ledger-import', type=Path)
     parser.add_argument('--record-l4-smoke', action='store_true', help='Charge the reported 20261118_043333_653758 L4 smoke once, with backup.')
     parser.add_argument('--deterministic-cudnn', action='store_true', help='Set TF_CUDNN_DETERMINISTIC=1 for both preflight and training; no package changes.')
+    parser.add_argument('--deterministic-reductions', action='store_true', help='Enable the pinned XLA deterministic GPU reduction pass for both methods; recorded in run provenance.')
     parser.add_argument('--cifar-archive', type=Path)
     parser.add_argument('--max-hours', type=float, default=0.75, help='Wall limit including setup; default 45 minutes.')
     parser.add_argument('--openstack-bin', default='openstack', help='Separate cloud-control CLI, not the SAM environment.')

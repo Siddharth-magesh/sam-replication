@@ -2,7 +2,7 @@
 
 ## Current first comparison: follow run_config.md
 
-**Latest state:** `20261118_072652` again failed the numerical gate; `--leave-active` correctly kept SSH open. Do not repeat the full comparison while that issue is unresolved. The diagnostic has now been tightened to warm both transforms before measurement, reuse the same prepared reference inputs across calls, and verify input immutability. This tests a possible harness/first-execution effect; it is not a claimed resolution or a tolerance change.
+**Latest state:** `20261118_073439` still failed reference repeatability after warm-up with unchanged inputs. Main training remains blocked. The source audit found that the previous cuDNN setting left XLA GPU reductions uncontrolled. Added explicit `--deterministic-reductions`, supported by the exact pinned compiler, and corrected the launcher path so the option survives XLA_FLAGS construction. This is a source-backed runtime correction; its effect on A100 is **(to verify)**. No packages, original training code or thresholds changed. See the pinned-source links in [notes.md](notes.md).
 
 For one bounded, attended **SGD diagnostic only**, on the instance:
 
@@ -12,10 +12,10 @@ git switch repro
 git pull --ff-only origin repro
 python3 -u experiments/jetstream_wrn.py preflight --execute \
   --diagnostic-only --selection SGD-200_seed_0 \
-  --deterministic-cudnn --leave-active --max-hours 0.1
+  --deterministic-cudnn --deterministic-reductions --leave-active --max-hours 0.1
 ```
 
-This uses the installed environment/cache, has a six-minute invocation cap, runs neither an epoch nor main training, and leaves the machine connected. The diagnostic-only dispatcher now runs exactly the selected method. Print the new SESSION's `preflight/SGD-200_seed_0/diagnostics.json`; the report records `reference_protocol=warmed_same_prepared_inputs_v1` and `input_integrity`. A completed diagnostic-only process is not a passed preflight. Keep earlier reports; no old failure is overwritten. If idle afterward, manually shelve as below.
+This uses the installed environment/cache, has a six-minute invocation cap, runs neither an epoch nor main training, and leaves the machine connected. The diagnostic-only dispatcher now runs exactly the selected method. The command now prints the diagnostic JSON automatically and saves it at the new SESSION's `preflight/SGD-200_seed_0/diagnostics.json`. Check for `--xla_gpu_deterministic_reductions=true` in the recorded runtime controls. It also records `reference_protocol=warmed_same_prepared_inputs_v1` and `input_integrity`. A completed diagnostic-only process is not a passed preflight. Proceed only after the report says `numerical_equivalence: passed`, `reference_repeatable: true` and `cross_transform_close: true`; both full method preflights remain mandatory before training. Keep both runtime options for the full comparison and on resume, and use a fresh session for this code revision. Keep earlier reports; no old failure is overwritten. If idle afterward, manually shelve as below.
 
 ### Current debugging mode: foreground Python, keep the instance connected
 
@@ -26,7 +26,7 @@ For a future attended attempt, use the existing Python entry point directly with
 ```bash
 cd /workspace/sam-replication
 python3 -u experiments/cifar10_first_comparison/run.py comparison \
-  --execute --leave-active --deterministic-cudnn \
+  --execute --leave-active --deterministic-cudnn --deterministic-reductions \
   --max-hours 24 --record-l4-smoke
 ```
 
@@ -66,7 +66,7 @@ git status --short
 git switch repro
 git pull --ff-only origin repro
 export OS_CLOUD=CIS262089_IU
-bash experiments/cifar10_first_comparison/start.sh comparison --execute --deterministic-cudnn \
+bash experiments/cifar10_first_comparison/start.sh comparison --execute --deterministic-cudnn --deterministic-reductions \
   --max-hours 24 --record-l4-smoke
 ```
 
@@ -88,7 +88,7 @@ If interrupted **after preflight passed**, retain the printed SESSION and use th
 
 ```bash
 export SESSION=/workspace/sam_paper_replication/runs/REPLACE_WITH_PRINTED_SESSION
-bash experiments/cifar10_first_comparison/start.sh comparison --execute --deterministic-cudnn \
+bash experiments/cifar10_first_comparison/start.sh comparison --execute --deterministic-cudnn --deterministic-reductions \
   --session "$SESSION" --resume --max-hours 24 --record-l4-smoke
 ```
 
@@ -185,7 +185,7 @@ Confirm that the response names `csci567-sam`. Securely transfer the authoritati
 cd /workspace/sam-replication
 export OS_CLOUD=CIS262089_IU
 python3 experiments/cifar10_first_comparison/run.py preflight  # safe plan-only check
-bash experiments/cifar10_first_comparison/start.sh preflight --execute --deterministic-cudnn \
+bash experiments/cifar10_first_comparison/start.sh preflight --execute --deterministic-cudnn --deterministic-reductions \
   --max-hours 0.75
 ```
 
@@ -202,14 +202,14 @@ cd /workspace/sam-replication
 export OS_CLOUD=CIS262089_IU
 export SESSION=/workspace/sam_paper_replication/runs/REPLACE_WITH_PREFLIGHT_SESSION
 # Set APPROVED_HOURS to the reviewed invocation limit; no long run is enabled by default.
-bash experiments/cifar10_first_comparison/start.sh sam --execute --deterministic-cudnn \
+bash experiments/cifar10_first_comparison/start.sh sam --execute --deterministic-cudnn --deterministic-reductions \
   --session "$SESSION" --max-hours "${APPROVED_HOURS:?Set a reviewed SAM limit first}"
 ```
 
 Wait for SAM completion; the runner requests shelving. Restart **only csci567-sam**, reconnect, restore SESSION and OS_CLOUD, and set the reviewed SGD limit before:
 
 ```bash
-bash experiments/cifar10_first_comparison/start.sh sgd --execute --deterministic-cudnn \
+bash experiments/cifar10_first_comparison/start.sh sgd --execute --deterministic-cudnn --deterministic-reductions \
   --session "$SESSION" --max-hours "${APPROVED_HOURS:?Set a reviewed SGD limit first}"
 ```
 
@@ -351,7 +351,7 @@ Transfer the existing authoritative `gpu_budget.json` and verified `cifar-10-bin
 ```bash
 cd /workspace/sam-replication
 export OS_CLOUD=CIS262089_IU
-bash experiments/start_jetstream.sh preflight --execute --deterministic-cudnn --setup \
+bash experiments/start_jetstream.sh preflight --execute --deterministic-cudnn --deterministic-reductions --setup \
   --ledger-import /workspace/sam_inputs/gpu_budget.json \
   --cifar-archive /workspace/sam_inputs/cifar-10-binary.tar.gz \
   --selection all --max-hours 0.75 \
@@ -366,7 +366,7 @@ For a bounded one-epoch functional smoke on the full A100, use the separate `smo
 
 ```bash
 export OS_CLOUD=CIS262089_IU
-bash experiments/start_jetstream.sh smoke --execute --deterministic-cudnn \
+bash experiments/start_jetstream.sh smoke --execute --deterministic-cudnn --deterministic-reductions \
   --selection all --max-hours 0.5 \
   --openstack-bin /workspace/js2-control/bin/openstack
 ```
@@ -376,7 +376,7 @@ Inspect both `smoke/SGD-200_seed_0/smoke.json` and `smoke/SAM-200_seed_0/smoke.j
 For a bounded one-replica numerical harness diagnostic after a code change, use one selected method and stop before the eight-replica/full-epoch checks:
 
 ```bash
-bash experiments/start_jetstream.sh preflight --execute --deterministic-cudnn --diagnostic-only \
+bash experiments/start_jetstream.sh preflight --execute --deterministic-cudnn --deterministic-reductions --diagnostic-only \
   --selection SGD-200_seed_0 --max-hours 0.25 \
   --openstack-bin /workspace/js2-control/bin/openstack
 ```
@@ -390,7 +390,7 @@ Review the selected-run cost estimate and remaining allocation in Exosphere. The
 ```bash
 cd /workspace/sam-replication
 export OS_CLOUD=CIS262089_IU
-bash experiments/start_jetstream.sh train --execute --deterministic-cudnn \
+bash experiments/start_jetstream.sh train --execute --deterministic-cudnn --deterministic-reductions \
   --session /workspace/sam_paper_replication/runs/REPLACE_WITH_SESSION \
   --selection all --max-hours "${APPROVED_HOURS:?Set the hours approved after preflight}" \
   --openstack-bin /workspace/js2-control/bin/openstack
