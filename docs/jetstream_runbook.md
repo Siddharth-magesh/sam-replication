@@ -2,22 +2,11 @@
 
 ## Current first comparison: follow run_config.md
 
-**Latest state (November 18):** the reduction correction worked in supplied A100 diagnostic `20261118_141736`: original repeats and one-lane wrapper/reference differences were all zero. Full preflight `20261118_142008` passed that check and reached eight logical replicas, then stopped on BatchNorm. All eight updates were finite and independent; relative BN differences were about 1.2e-5, but absolute differences (up to 1.52588e-4) exceeded the 2e-5 limit. SAM preflight and main training have not started in this sequence.
+**Latest state (November 18): both full preflights passed.** Session `/workspace/sam_paper_replication/runs/20261118_143021`, revision `77cd455`, with both determinism options. SGD and SAM passed numerical, eight-lane BatchNorm, full one-epoch/evaluation and checkpoint-restoration checks. Do not repeat setup or preflight for this unchanged session.
 
-The BN gate now compares the retained training state against an independent clean forward using the **same eight-lane vmap layout**, with original weights and states. The former serial-lane comparison used a different convolution batch shape; it remains recorded as `bn_serial_lanes`. The enforced `bn_lanes` limits stay 2e-5 absolute and 2e-4 relative. Actual A100 outcome **(to verify)**; no pass is inferred from the older small differences. Both full preflights must pass before training.
+**Budget blocks the unchanged pair:** the launcher printed SAM-200 **45.84 h** and SGD-200 **14.20 h**, including the existing 20% allowance: **60.04 h combined**, versus **38.03 h remaining** in the 40-hour ledger. These are conservative first-epoch extrapolations, not observed 200-epoch runtimes. Review the saved step timings before changing the plan; the SAM steady-state/compilation breakdown is **(to verify)**. See [run_config.md](../run_config.md) for measured times and memory.
 
-On the already-installed instance, pull and run full preflight in a fresh session:
-
-```bash
-cd /workspace/sam-replication
-git switch repro
-git pull --ff-only origin repro
-python3 -u experiments/jetstream_wrn.py preflight --execute \
-  --deterministic-cudnn --deterministic-reductions \
-  --leave-active --max-hours 0.75
-```
-
-This reuses installed packages, cached data and the same budget ledger. It runs SGD and SAM preflights with eight-lane/BN checks, one epoch each, evaluation, checkpoint restoration and measured cost estimation. It does not start the 200-epoch runs. The 45 minutes is a cap, not a prediction. Failed workers now print saved diagnostics automatically. Keep the printed SESSION; do not reuse the failed session after a worker change. The machine stays active. Preserve both runtime options for later training/resume; do not reinstall or import an old ledger. Latest supplied charge: 1.656151276735556 / 40 hours.
+The user turned off the instance. Keep it off during offline analysis. The commands below are reference workflows, **not instructions to relaunch now**. Preserve this successful SESSION, both runtime options and the worker revision for any later continuation. No main training has started. Documentation-only updates do not change the saved worker.
 
 ### Current debugging mode: foreground Python, keep the instance connected
 
