@@ -135,6 +135,10 @@ def shelve(binary):
 
 
 def execute(args, root):
+    if args.deterministic_cudnn:
+        os.environ['TF_CUDNN_DETERMINISTIC'] = '1'
+    cudnn_deterministic = os.environ.get('TF_CUDNN_DETERMINISTIC', '0')
+    print('TF_CUDNN_DETERMINISTIC=' + cudnn_deterministic, flush=True)
     main = '04_wrn28_10_cifar10_paper_replication.ipynb'
     namespace = {'__name__': '__main__'}
     exec(cell(main, "WORK_ROOT = Path.home()"), namespace)
@@ -154,6 +158,7 @@ def execute(args, root):
     namespace['CONFIG'].update(budget_file=str(namespace['BUDGET_FILE']),
                               repo=str(namespace['REPO']), session=str(session),
                               data_dir=str(namespace['DATA_DIR']),
+                              cudnn_deterministic=cudnn_deterministic,
                               diagnostic_only=args.diagnostic_only)
     import_ledger(namespace['BUDGET_FILE'], args.ledger_import)
     if args.record_l4_smoke:
@@ -218,6 +223,7 @@ def main():
                         help='Stop after one-replica diagnostics; preflight only.')
     parser.add_argument('--ledger-import', type=Path)
     parser.add_argument('--record-l4-smoke', action='store_true', help='Charge the reported 20261118_043333_653758 L4 smoke once, with backup.')
+    parser.add_argument('--deterministic-cudnn', action='store_true', help='Set TF_CUDNN_DETERMINISTIC=1 for both preflight and training; no package changes.')
     parser.add_argument('--cifar-archive', type=Path)
     parser.add_argument('--max-hours', type=float, default=0.75, help='Wall limit including setup; default 45 minutes.')
     parser.add_argument('--openstack-bin', default='openstack', help='Separate cloud-control CLI, not the SAM environment.')
