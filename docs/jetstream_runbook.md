@@ -1,5 +1,73 @@
 # SAM replication on Jetstream2: runbook and chat handoff
 
+## Current first comparison: follow run_config.md
+
+The current user-selected scope is **SAM-200 seed 0, then SGD-200 seed 0**. No extra seeds or SGD-400 yet. This section supersedes the full-nine-run launch examples below; that larger experiment remains available for later work. Use branch **repro**. No Jetstream instance was started for this packaging change.
+
+Only four new files are needed in `experiments/cifar10_first_comparison/`:
+
+| File | Role |
+|---|---|
+| `config.json` | Fixed experiment and environment manifest; validated against notebook configuration and original pins. It is not a hyperparameter override file. |
+| `run.py` | Selects preflight, seed-0 SAM, seed-0 SGD or report through the existing guarded runner. Plan-only unless `--execute` is supplied. |
+| `start.sh` | Validates arguments then launches `run.py` in detached tmux, with persistent logs. Plan-only without `--execute`. |
+| `report.py` | Reads both completed 200-epoch records and prints test errors, gaps from paper numbers and the paired difference. No GPU, no file writes. |
+
+Clone the **whole repository**, because these entry points reuse `experiments/jetstream_wrn.py` and notebook 04. The original SAM training step, eight logical sub-batches, separate BatchNorm states, strict numerical preflight, recovery and budget ledger remain unchanged. The plain `python -m sam.sam_jax.train ...` command supplied in the request has the correct main hyperparameters, but it uses the number of physical JAX devices: on one GPU it gives one batch of 256, not eight sub-batches of 32. It also expects a source directory named `sam`, importable from its parent, and appends hyperparameter subdirectories to output_dir. Use the wrapper for this single-GPU experiment.
+
+Environment: no Windows venv is created. `preflight --setup` creates or repairs `/workspace/sam_paper_replication/envs/sam` with Python 3.8 using micromamba, including CUDA 11.0/cuDNN 8.0.5 and the archived CUDA 11.3 compiler. It installs the original requirements with the existing documented runtime-only absl-py 0.10.0 adjustment and GPU jaxlib 0.1.57+cuda110. JAX 0.2.6 / Flax 0.2.2 stay pinned. Original requirements and authors' Python sources are untouched. Do not run the guide's generic `js2 setup` (its modern vLLM stack is unrelated). The setup runs every time explicitly requested, repairing partially installed environments rather than trusting that an interpreter exists.
+
+Before execution, complete the existing storage, cloud-control credential and authoritative-ledger prerequisites in sections 4–5 below. Confirm **csci567-sam** and a full A100 40 GB; a 10 GB slice is rejected. No script resizes or creates a VM. Ensure `OS_CLOUD` identifies your existing credential configuration. Cloud credentials stay outside Git. Import the latest authoritative ledger, including any later Jetstream attempts; do not replace it with an older Colab copy or a fresh zero ledger.
+
+On csci567-sam:
+
+```bash
+cd /workspace
+git clone --branch repro https://github.com/Siddharth-magesh/sam-replication.git
+cd sam-replication
+# If already cloned, inspect git status and use git pull --ff-only on repro instead.
+export OS_CLOUD=CIS262089_IU  # Use the cloud name in your existing credentials.
+python3 experiments/cifar10_first_comparison/run.py preflight  # safe plan-only check
+bash experiments/cifar10_first_comparison/start.sh preflight --execute --setup \
+  --ledger-import /workspace/sam_inputs/gpu_budget.json \
+  --cifar-archive /workspace/sam_inputs/cifar-10-binary.tar.gz \
+  --max-hours 0.75
+```
+
+The archive argument is optional if the existing TFDS cache is complete or normal downloading works. The authoritative ledger is mandatory on migration; subsequent invocations reuse it. The default separate OpenStack CLI path is `/workspace/js2-control/bin/openstack`. Preflight runs both methods for timing and correctness, then requests shelving. Its 45-minute invocation cap includes setup; at the guide's 64 SU/h rate, plan approximately 48 SUs plus shelving/start latency. This is not a guarantee that setup/preflight will finish in 45 minutes.
+
+Copy the printed `SESSION=...` path. Both preflights must pass. Read the measured per-method estimates, the remaining worker budget and the live course allocation. For the first comparison add only the SAM-200 and SGD-200 estimates, not nine runs. Each training invocation independently checks its selected remaining work against the shared ledger. Do not bypass a failed numerical gate or treat the old 5–11 / 3–6 hour guesses as measurements.
+
+After reviewing the measured costs and starting the same instance again if shelved:
+
+```bash
+cd /workspace/sam-replication
+export OS_CLOUD=CIS262089_IU
+export SESSION=/workspace/sam_paper_replication/runs/REPLACE_WITH_PREFLIGHT_SESSION
+# Set APPROVED_HOURS to the reviewed invocation limit; no long run is enabled by default.
+bash experiments/cifar10_first_comparison/start.sh sam --execute \
+  --session "$SESSION" --max-hours "${APPROVED_HOURS:?Set a reviewed SAM limit first}"
+```
+
+Wait for SAM completion; the runner requests shelving. Restart **only csci567-sam**, reconnect, restore SESSION and OS_CLOUD, and set the reviewed SGD limit before:
+
+```bash
+bash experiments/cifar10_first_comparison/start.sh sgd --execute \
+  --session "$SESSION" --max-hours "${APPROVED_HOURS:?Set a reviewed SGD limit first}"
+```
+
+SGD refuses to start until SAM's status is complete in that session. Add `--resume` to the same SAM/SGD command after interruption; keep the same session, code, environment and authoritative ledger. The last fully committed epoch is restored. Each command is a separate job; SGD is not automatically launched after shelving. `tmux attach -t sam-wrn` shows output; Ctrl-b then d detaches. Closing the laptop does not stop tmux. Inspect `/workspace/sam_paper_replication/launcher_logs/first_comparison_*.log` and the launcher receipt. Pre-launch failures can occur before auto-shelving is armed: check the log promptly and verify SHELVED_OFFLOADED from WSL/Exosphere after completion/failure. Do not assume Linux shutdown stops billing.
+
+Each successful training phase generates the existing `SESSION/summary/test_error_curves.png` and `final_per_seed.csv`. After **both** runs finish, this read-only command prints the compact comparison (also works on downloaded results with system Python):
+
+```bash
+python3 experiments/cifar10_first_comparison/report.py "$SESSION"
+```
+
+Report epoch-200 error, the gap from SAM 2.7% / SGD 3.5%, and SGD-200 minus SAM in percentage points. One seed provides no SD/CI, and paper SGD is the better of 200/400 epochs. The notebook's full reproduction assessment correctly remains incomplete with only two of nine planned runs; this is not a failed first-comparison job or a claim of full reproduction.
+
+Validation for this package: Python 3.8 syntax, JSON/configuration and no-execution CLI checks are performed locally. Colab validation **(to verify)**: WSL access was rejected by the approval control before the CLI could check authentication; no retry or session creation was attempted. Full A100 preflight, legacy GPU compatibility, eight-sub-batch SAM memory fit and unattended cloud lifecycle remain **(to verify)**. Earlier T4 SAM OOM and Jetstream initialization failures remain unresolved evidence, not successful validation.
+
 Updated: November 17, 2026. Read this entire document before running GPU commands.
 
 ## 1. What we are reproducing

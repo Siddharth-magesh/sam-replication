@@ -1,0 +1,31 @@
+{
+  "source_revision": "f7b9ff46ee0deab8004d5508baf68b7e7c3dad1a",
+  "dataset": "cifar10",
+  "model": "WideResnet28x10",
+  "batch_size": 256,
+  "logical_replicas": 8,
+  "subbatch_size": 32,
+  "lr": 0.1,
+  "weight_decay": 0.0005,
+  "rho": 0.05,
+  "gradient_clipping": 5.0,
+  "momentum": 0.9,
+  "nesterov": true,
+  "schedule": "cosine, 200 epochs, no warmup",
+  "augmentation": "basic, no batch-level augmentation",
+  "runs_in_order": ["SAM-200_seed_0", "SGD-200_seed_0"],
+  "budget_limit_hours": 40.0,
+  "environment": {
+    "python": "3.8",
+    "pip": "24.0",
+    "jax": "0.2.6",
+    "jaxlib": "0.1.57+cuda110",
+    "flax": "0.2.2",
+    "numpy": "1.18.5",
+    "tensorflow": "2.3.1",
+    "cudatoolkit": "11.0",
+    "cudnn": "8.0.5",
+    "cuda-nvcc": "11.3.122",
+    "runtime_absl_py": "0.10.0"
+  }
+}
