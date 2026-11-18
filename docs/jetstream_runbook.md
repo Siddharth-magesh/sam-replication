@@ -2,7 +2,54 @@
 
 ## Current first comparison: follow run_config.md
 
-**Start here and follow steps A–F in order.** Commands labelled WSL run on your laptop; commands labelled instance run after connecting to csci567-sam. Do not run the later nine-run examples for this first comparison.
+**For the already-installed csci567-sam, use the single-job commands immediately below.** Steps A–F are the alternative staged/reference workflow. Commands labelled WSL run on your laptop; commands labelled instance run after connecting to csci567-sam. Do not run the later nine-run examples for this first comparison.
+
+### Installed instance: preflight → SAM-200 → SGD-200 in one job
+
+The November 18 UTC preflight log exposed a bug in our diagnostic wrapper: the reference pmap received an unreplicated optimizer, including a scalar step. The corrected wrapper adds the one-device axis to every reference optimizer leaf and unwraps the reference learning-rate axis before comparison. Original SAM/SGD training logic, BatchNorm behavior and numerical tolerances are unchanged. This is a fresh worker revision: do not reuse the failed `20261118_064611` session.
+
+On **WSL**, if the machine has auto-shelved, start only this machine, then connect. If already ACTIVE, skip `start`:
+
+```bash
+~/bin/js2 start csci567-sam
+~/bin/js2 ssh csci567-sam
+```
+
+On the **instance**, inspect the checkout first. If `git status --short` prints changes, preserve/review them before switching or pulling:
+
+```bash
+cd /workspace/sam-replication
+git status --short
+git switch repro
+git pull --ff-only origin repro
+export OS_CLOUD=CIS262089_IU
+bash experiments/cifar10_first_comparison/start.sh comparison --execute \
+  --max-hours 24 --record-l4-smoke
+```
+
+This command reuses `/workspace/sam_paper_replication/envs/sam`, its pinned runtime checkout, the persistent CIFAR cache and the existing authoritative `gpu_budget.json`. **Do not add `--setup`, `--ledger-import` or `--cifar-archive` for this installed machine.** Missing local prerequisites are checked before tmux starts. `--setup` is reserved for a genuinely absent/broken environment; it is not required on each start/unshelve.
+
+`comparison` creates and prints a new SESSION, runs both strict preflights once, sums the actual timing estimates for the two selected runs and starts SAM-200 seed 0 followed by SGD-200 seed 0 only if the gates and budget pass. It renders results and requests shelving at the end (or on failure); there is no shelf/restart between phases. Twenty-four hours is a maximum invocation duration, not an estimate; at the guide's 64 SU/h rate it caps planned allocation at approximately 1,536 SUs plus lifecycle latency. Check remaining course allocation before launching. The independent cumulative 40-worker-hour limit still applies.
+
+`--record-l4-smoke` explicitly adds the user-reported 0.32108525306166674-hour completed L4 smoke once, under a stable attempt ID, preserving existing ledger entries and writing `gpu_budget.before_l4_import.json` before replacement. Repeating the option does not double-charge. It excludes separate initialization attempts whose timings were not saved; accounting for those remains **(to verify)**. No missing time is silently declared zero.
+
+Monitor on the **instance**:
+
+```bash
+tail -f /workspace/sam_paper_replication/launcher_logs/latest_first_comparison.log
+```
+
+Ctrl-c exits `tail` only. The detached tmux job continues after SSH/laptop disconnects. To interact with the job itself, use `tmux attach -t sam-wrn`; Ctrl-b then d detaches. The latest log contains the exact SESSION path and any failure; do not repeatedly reinstall or launch another job if the numerical gate fails. Corrected A100 preflight remains **(to verify)** until an actual pass.
+
+If interrupted **after preflight passed**, retain the printed SESSION and use the same code revision:
+
+```bash
+export SESSION=/workspace/sam_paper_replication/runs/REPLACE_WITH_PRINTED_SESSION
+bash experiments/cifar10_first_comparison/start.sh comparison --execute \
+  --session "$SESSION" --resume --max-hours 24 --record-l4-smoke
+```
+
+Completed preflight/methods are skipped after provenance checks, incomplete training resumes from its committed checkpoint, and an unstarted method starts fresh. An unsuccessful preflight needs investigation; it is not converted into a pass. Use step F to verify shelving and inspect final results.
 
 Latest evidence (November 17, 2026 local time): the user-run Colab L4 test reported **both SGD and SAM functional smoke tests passed**, ten batches each at batch 256 / eight sub-batches. It checked finite losses/state, parameter and BatchNorm updates, evaluation, checkpoint restoration and shared initial weights. Recorded time was **0.32108525306166674 hours (19.27 minutes)**, including data preparation and compilation. SGD's 13.56 minutes versus SAM's 5.70 minutes is not a speed comparison: SGD downloaded/prepared CIFAR first. A100 strict numerical preflight and unattended shelving remain **(to verify)**.
 
@@ -87,7 +134,7 @@ export OS_CLOUD=CIS262089_IU  # Use the cloud name in your existing credentials.
 
 Confirm that the response names `csci567-sam`. Securely transfer the authoritative `gpu_budget.json` and optional verified `cifar-10-binary.tar.gz` into `/workspace/sam_inputs/`. A prepared TFDS cache can instead be copied to `/workspace/sam_paper_replication/tensorflow_datasets/`, preserving its directory structure. Do not upload the Colab Python environment.
 
-**Budget prerequisite:** the standalone L4 `attempts.json` is evidence, not a replacement for the authoritative supervisor ledger. Reconcile its 0.32108525306166674 hours and other unrecorded diagnostic attempts into that ledger before importing it. Do not import the old 0.8683-hour Colab handoff as though it includes the new L4 run. If reconciliation is not done, stop here; the automatic supervisor cannot account for missing external attempts. Live total remains **(to verify)**.
+**Budget prerequisite:** the standalone L4 `attempts.json` is evidence, not a replacement for the authoritative supervisor ledger. The single-job command above uses `--record-l4-smoke` to charge its known total once. Preserve/account for other unrecorded diagnostic attempts separately. Do not import the old 0.8683-hour Colab handoff as though it includes later work. The existing Jetstream ledger is authoritative; its latest supplied dump already includes the earlier Jetstream attempts.
 
 ### D. Setup and preflight only — instance terminal
 
@@ -95,9 +142,7 @@ Confirm that the response names `csci567-sam`. Securely transfer the authoritati
 cd /workspace/sam-replication
 export OS_CLOUD=CIS262089_IU
 python3 experiments/cifar10_first_comparison/run.py preflight  # safe plan-only check
-bash experiments/cifar10_first_comparison/start.sh preflight --execute --setup \
-  --ledger-import /workspace/sam_inputs/gpu_budget.json \
-  --cifar-archive /workspace/sam_inputs/cifar-10-binary.tar.gz \
+bash experiments/cifar10_first_comparison/start.sh preflight --execute \
   --max-hours 0.75
 ```
 

@@ -60,6 +60,46 @@ def import_ledger(target, source):
     validate_ledger(json.loads(target.read_text()))
 
 
+def record_l4_smoke(target):
+    """Import the user-reported completed L4 attempt once; never reset history."""
+    attempt_id = 'colab-l4-smoke-20261118_043333_653758'
+    session = '/content/sam_l4_compat/smoke_20261118_043333_653758'
+    seconds = 0.32108525306166674 * 3600
+    with target.with_suffix('.lock').open('a+') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        data = json.loads(target.read_text())
+        validate_ledger(data)
+        entries = [a for a in data['attempts'] if a['id'] == attempt_id]
+        if entries:
+            assert len(entries) == 1 and entries[0]['charged_seconds'] == seconds
+            print('L4 smoke already recorded; no duplicate charge.', flush=True)
+            return
+        assert not any(a.get('session') == session for a in data['attempts']), 'L4 session already recorded under another ID; review before importing.'
+        assert all(a.get('state') == 'finished' for a in data['attempts']), 'Unsettled ledger attempt; do not edit its reservation.'
+        original = json.loads(json.dumps(data))
+        data['attempts'].append(dict(id=attempt_id, session=session, phase='external_smoke',
+            method='SGD-200+SAM-200', seed=0, state='finished',
+            reserved_seconds=seconds, charged_seconds=seconds, observed_seconds=seconds,
+            exit_code=0, imported_unix=time.time(),
+            evidence='User-reported attempts.json total; both L4 smoke methods passed. Excludes separate initialization/setup/idle time.'))
+        validate_ledger(data)
+        backup = target.with_name('gpu_budget.before_l4_import.json')
+        if backup.exists():
+            assert json.loads(backup.read_text()) == original, 'Existing import backup differs; inspect ledger history.'
+        else:
+            with backup.open('x') as stream:
+                json.dump(original, stream, indent=2)
+                stream.flush()
+                os.fsync(stream.fileno())
+        temporary = target.with_suffix('.import.tmp')
+        with temporary.open('w') as stream:
+            json.dump(data, stream, indent=2)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(str(temporary), str(target))
+        print('Recorded L4 smoke: 0.3210852531 hours. Original ledger backed up.', flush=True)
+
+
 def verify_machine():
     with urllib.request.urlopen('http://169.254.169.254/openstack/latest/meta_data.json', timeout=5) as response:
         metadata = json.load(response)
@@ -105,7 +145,7 @@ def execute(args, root):
                      PYTHON=root / 'envs' / 'sam' / 'bin' / 'python',
                      REPO=root / 'work' / 'sam', SESSION=session,
                      DATA_DIR=root / 'tensorflow_datasets', BUDGET_FILE=root / 'gpu_budget.json',
-                     RUN_SETUP=args.setup, RUN_PREFLIGHT=args.phase == 'preflight',
+                     RUN_SETUP=args.setup, RUN_PREFLIGHT=args.phase in ('preflight', 'comparison'),
                      RUN_TRAINING=args.phase == 'train', RENDER_RESULTS=False,
                      RUN_SELECTION=args.selection, RESUME_EXISTING=args.resume,
                      RUN_DIAGNOSTIC_SMOKE=args.phase == 'smoke',
@@ -116,6 +156,8 @@ def execute(args, root):
                               data_dir=str(namespace['DATA_DIR']),
                               diagnostic_only=args.diagnostic_only)
     import_ledger(namespace['BUDGET_FILE'], args.ledger_import)
+    if args.record_l4_smoke:
+        record_l4_smoke(namespace['BUDGET_FILE'])
     if args.cifar_archive:
         assert hashlib.sha256(args.cifar_archive.read_bytes()).hexdigest() == ARCHIVE_SHA256
         destination = namespace['DATA_DIR'] / 'downloads' / 'manual' / 'cifar-10-binary.tar.gz'
@@ -131,9 +173,25 @@ def execute(args, root):
     exec(cell(main, 'WORKER_SOURCE ='), namespace)
     exec(cell(main, 'def budget_snapshot():'), namespace)
     exec(cell(main, 'def selected_runs():'), namespace)
+    if args.phase == 'comparison':
+        selections = ['SAM-200_seed_0', 'SGD-200_seed_0']
+        total_hours = 0.0
+        for selection in selections:
+            namespace['RUN_SELECTION'] = selection
+            total_hours += namespace['preflight_budget']()[1]
+        remaining = min(namespace['budget_snapshot']()['remaining_hours'],
+                        max(0.0, (args.deadline_monotonic - time.monotonic()) / 3600))
+        print('Both selected remaining runs:', total_hours, 'estimated hours;', remaining, 'hours available.', flush=True)
+        assert total_hours <= remaining - 30 / 3600, 'Measured two-run estimate exceeds this invocation or cumulative budget. No full training launched.'
+        namespace['RUN_TRAINING'] = True
+        for selection in selections:
+            namespace['RUN_SELECTION'] = selection
+            manifest = session / 'train' / selection / 'manifest.json'
+            namespace['RESUME_EXISTING'] = args.resume and manifest.exists()
+            exec(cell(main, 'if RUN_TRAINING:\n'), namespace)
     if args.phase in ('train', 'smoke'):
         exec(cell(main, 'if RUN_TRAINING:\n'), namespace)
-    if args.phase in ('train', 'report'):
+    if args.phase in ('train', 'report', 'comparison'):
         render = cell(main, 'if RENDER_RESULTS:\n')
         render = render.replace('from IPython.display import display', 'display = print')
         script = ('from pathlib import Path\nimport json, hashlib\nimport matplotlib\n'
@@ -149,7 +207,7 @@ def execute(args, root):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('phase', choices=['preflight', 'smoke', 'train', 'report'])
+    parser.add_argument('phase', choices=['preflight', 'smoke', 'train', 'report', 'comparison'])
     parser.add_argument('--execute', action='store_true', help='Required to install or run anything.')
     parser.add_argument('--setup', action='store_true', help='Install/repair pinned environment before preflight.')
     parser.add_argument('--work-root', type=Path, default=Path('/workspace/sam_paper_replication'))
@@ -159,16 +217,17 @@ def main():
     parser.add_argument('--diagnostic-only', action='store_true',
                         help='Stop after one-replica diagnostics; preflight only.')
     parser.add_argument('--ledger-import', type=Path)
+    parser.add_argument('--record-l4-smoke', action='store_true', help='Charge the reported 20261118_043333_653758 L4 smoke once, with backup.')
     parser.add_argument('--cifar-archive', type=Path)
     parser.add_argument('--max-hours', type=float, default=0.75, help='Wall limit including setup; default 45 minutes.')
     parser.add_argument('--openstack-bin', default='openstack', help='Separate cloud-control CLI, not the SAM environment.')
     parser.add_argument('--leave-active', action='store_true', help='Explicitly disable automatic shelving; manual shelving required.')
     args = parser.parse_args()
     assert 0 < args.max_hours <= 40
-    assert not args.setup or args.phase == 'preflight', '--setup is only for preflight.'
+    assert not args.setup or args.phase in ('preflight', 'comparison'), '--setup is only for preflight/comparison.'
     assert not args.diagnostic_only or args.phase == 'preflight', '--diagnostic-only is only for preflight.'
-    assert args.phase == 'smoke' or args.phase == 'preflight' or args.session, 'Specify the preflight SESSION for train/report.'
-    assert not args.resume or args.phase == 'train', '--resume is only for full training.'
+    assert args.phase in ('smoke', 'preflight', 'comparison') or args.session, 'Specify the preflight SESSION for train/report.'
+    assert not args.resume or (args.phase in ('train', 'comparison') and args.session), '--resume requires a training phase and the original session.'
     if args.phase == 'smoke':
         assert args.selection == 'all', 'The smoke phase always runs SGD-200 and SAM-200 for seed 0.'
         assert not args.setup and not args.diagnostic_only, 'Smoke does not combine with setup or numerical-only diagnostics.'
@@ -189,6 +248,7 @@ def main():
             assert cloud_binary, 'Install/configure a separate OpenStack CLI for auto-shelving, or explicitly use --leave-active.'
             cloud_check(cloud_binary)
         started = time.time()
+        args.deadline_monotonic = time.monotonic() + args.max_hours * 3600
         status = {'phase': args.phase, 'server': SERVER_NAME, 'started_unix': started, 'status': 'running'}
         receipt = root / ('launcher_' + time.strftime('%Y%m%d_%H%M%S') + '.json')
         def interrupt(signum, frame):

@@ -113,7 +113,7 @@ One full comparison (SAM, SGD-200, SGD-400) is roughly 12 to 16 A100-hours. The 
 
 | 12 | WRN-28-10 replication notebook: selected-run budget, paired inference and predeclared reproduction rule | Code lead | Nov 16 | L4 ten-batch SGD and SAM functional smoke passed (user-supplied output); earlier T4 SAM OOM retained. Checkpoint metadata fixed; A100 strict preflight and reproduction outcome (to verify); no full training run |
 
-| 13 | Jetstream background launcher for csci567-sam | Code lead | Nov 17 | First-comparison scripts/config prepared on repro: SAM-200 seed 0 then SGD-200 seed 0. Python 3.8/shell syntax, JSON/config and plan-only paths checked; Colab execution, full A100 preflight and automatic shelving (to verify) |
+| 13 | Jetstream background launcher for csci567-sam | Code lead | Nov 17 | Single-job first comparison prepared on repro with corrected pmap diagnostic shapes: preflight then SAM-200 seed 0 then SGD-200 seed 0. Python 3.8/shell syntax, JSON/config and plan-only paths checked; Colab execution, full A100 preflight and automatic shelving (to verify) |
 
 Owners marked TBD should be filled in at the next meeting. Each task should have exactly one owner, even if several people help.
 
@@ -132,6 +132,8 @@ Owners marked TBD should be filled in at the next meeting. Each task should have
 The report is 4 pages excluding references and appendix, in a standard conference template. The appendix must contain extra plots, hyperparameters, failed attempts, a link to our code, a short statement of who did what, and a statement of how AI tools were used. We are allowed to use AI tools to understand the paper, debug code, and polish writing, but not to generate the analysis or conclusions, and every member must be able to explain the report if the TAs ask. To make the appendix statement easy, **each member should keep a running note of where they used AI help** (which task, which tool), added to the bottom of this file. Report failed runs and changed plans honestly, and do not adjust the experiment after seeing results to make it say something. Check-in and report-review milestones are not graded separately, but groups that skip them rarely do well, so everyone should come prepared.
 
 ## 12. Changelog
+
+- **2026-11-17**: Diagnosed the supplied later UTC Jetstream failure as a missing optimizer device axis in the pmap reference; fixed it and learning-rate comparison shape. Added single-job preflight→SAM→SGD execution, persistent-environment reuse instructions, early missing-input checks, latest-log pointer and explicit one-time L4 accounting. Local non-GPU regression/control-flow checks passed; corrected A100 preflight (to verify).
 
 - **2026-11-17**: Recorded user-reported L4 SGD/SAM ten-batch functional success (0.3210852531 hours). Reworked the Jetstream runbook entry sequence with explicit WSL/instance commands, new/existing clone paths, repro switch/pull, preflight, staged training and shelving verification. A100 preflight and cumulative-ledger reconciliation remain (to verify). Documentation only; no remote execution.
 
@@ -160,6 +162,8 @@ The report is 4 pages excluding references and appendix, in a standard conferenc
 - **2026-10-20**: Tracker created. Environment working on Colab T4, SAM and SGD smoke tests passed, code findings documented, shared notebook prepared. A100 setup and first real reproduction not yet started.
 
 ## 13. AI-usage log (for the appendix statement)
+
+- **2026-11-17**: Codex inspected actual failure logs, corrected diagnostic tensor shapes, consolidated the launch sequence and checked it locally with simulated workers. No SAM implementation replacement, GPU run or fabricated numerical result.
 
 - **2026-11-17**: Codex interpreted supplied Colab diagnostic/smoke output and clarified the Jetstream operating guide at user request. Recorded functional success separately from unverified A100 numerical correctness; did not run training or infer paper accuracy.
 

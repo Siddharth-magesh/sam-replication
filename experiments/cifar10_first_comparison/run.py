@@ -8,6 +8,7 @@ import argparse
 import ast
 import json
 from pathlib import Path
+import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -55,12 +56,14 @@ def validate_config():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('phase', choices=['preflight', 'sam', 'sgd', 'report'])
+    parser.add_argument('phase', choices=['preflight', 'sam', 'sgd', 'report', 'comparison'])
     parser.add_argument('--execute', action='store_true')
     parser.add_argument('--setup', action='store_true', help='Create/repair the pinned Python 3.8 environment during preflight.')
     parser.add_argument('--session', type=Path)
     parser.add_argument('--resume', action='store_true')
     parser.add_argument('--ledger-import', type=Path)
+    parser.add_argument('--record-l4-smoke', action='store_true')
+    parser.add_argument('--check-inputs', action='store_true', help='Read-only filesystem checks before starting tmux.')
     parser.add_argument('--cifar-archive', type=Path)
     parser.add_argument('--max-hours', type=float, default=0.75)
     parser.add_argument('--openstack-bin', default='/workspace/js2-control/bin/openstack')
@@ -69,12 +72,29 @@ def main():
     config = validate_config()
     if not 0 < args.max_hours <= config['budget_limit_hours']:
         parser.error('--max-hours must be positive and at most 40.')
-    if args.phase != 'preflight' and args.session is None:
+    if args.phase not in ('preflight', 'comparison') and args.session is None:
         parser.error('--session is required after preflight.')
-    if args.setup and args.phase != 'preflight':
-        parser.error('--setup is only valid for preflight.')
-    if args.resume and args.phase not in ('sam', 'sgd'):
-        parser.error('--resume is only valid for training.')
+    if args.setup and args.phase not in ('preflight', 'comparison'):
+        parser.error('--setup is only valid for preflight/comparison.')
+    if args.resume and (args.phase not in ('sam', 'sgd', 'comparison') or args.session is None):
+        parser.error('--resume requires a training phase and the original --session.')
+    if args.execute or args.check_inputs:
+        for name in ('ledger_import', 'cifar_archive'):
+            path = getattr(args, name)
+            if path is not None and not path.is_file():
+                parser.error('--' + name.replace('_', '-') + ' file is missing. Omit this option to reuse persistent inputs.')
+        work = Path('/workspace/sam_paper_replication')
+        if not (work / 'gpu_budget.json').is_file() and args.ledger_import is None:
+            parser.error('Persistent gpu_budget.json missing; recover/import the authoritative ledger first.')
+        if not args.setup:
+            for path in (work / 'envs/sam/bin/python', work / 'envs/sam/bin/ptxas',
+                         work / 'cuda/nvvm/libdevice/libdevice.10.bc', work / 'work/sam/requirements.txt'):
+                if not path.is_file():
+                    parser.error('Required setup file missing: ' + str(path) + '; use --setup only to install/repair.')
+            revision = subprocess.check_output(['git', '-C', str(work / 'work/sam'), 'rev-parse', 'HEAD'], text=True).strip()
+            if revision != config['source_revision']:
+                parser.error('Runtime source revision differs; do not overwrite it or start training.')
+            print('Reusing installed environment and persistent data; no package installation.', flush=True)
     phase = 'train' if args.phase in ('sam', 'sgd') else args.phase
     selection = config['runs_in_order'][1 if args.phase == 'sgd' else 0]
     command = [sys.executable, '-u', str(ROOT / 'experiments' / 'jetstream_wrn.py'), phase,
@@ -84,7 +104,7 @@ def main():
         value = getattr(args, option)
         if value is not None:
             command.extend(['--' + option.replace('_', '-'), str(value)])
-    for option in ('execute', 'setup', 'resume', 'leave_active'):
+    for option in ('execute', 'setup', 'resume', 'leave_active', 'record_l4_smoke'):
         if getattr(args, option):
             command.append('--' + option.replace('_', '-'))
     print('First comparison: SAM-200 seed 0, then SGD-200 seed 0; no SGD-400 or extra seeds.', flush=True)
