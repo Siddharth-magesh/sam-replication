@@ -1,0 +1,23 @@
+{
+  "dataset": "cifar10",
+  "model": "WideResNet28x10",
+  "epochs": 50,
+  "seed": 0,
+  "batch_size": 256,
+  "logical_replicas": 8,
+  "subbatch_size": 32,
+  "lr": 0.1,
+  "weight_decay": 0.0005,
+  "rho": 0.05,
+  "momentum": 0.9,
+  "nesterov": true,
+  "clip": 5.0,
+  "schedule": "cosine",
+  "warmup": 0,
+  "augmentation": "basic_reflect",
+  "methods": [
+    "SAM",
+    "SGD"
+  ],
+  "report": "final_epoch"
+}
