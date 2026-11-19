@@ -120,7 +120,9 @@ One full comparison (SAM, SGD-200, SGD-400) is roughly 12 to 16 A100-hours. The 
 | 16 | Optional separate original JAX SGD-50 launcher | Code lead | Nov 18 | SGD-only wrapper and separate result tree prepared; original worker/locks/budget retained. Concurrent launch blocked by active SAM reservation; serial alternative only. Runtime (to verify). |
 
 | 17 | CIFAR-100 / ResNet-18 SGD, SAM and IGR functional pilot | Code lead | Nov 18 | Notebook 06: 1k training images, two epochs, one seed, validation-only lambda selection. User-run T4 pipeline completed; not a hypothesis conclusion. |
-| 18 | CIFAR-100 intermediate T4 comparison | Code lead | Nov 18 | Notebook 07: 5k train, ten epochs, three-epoch lambda trials, warm-up/stability timing, validation sensitivity and epoch optimizer checkpoints. Prepared/locally checked; GPU execution/recovery (to verify). |
+| 18 | CIFAR-100 intermediate T4 comparison | Code lead | Nov 18 | Notebook 07: 5k train, ten epochs, three-epoch lambda trials, warm-up/stability timing, validation sensitivity and epoch optimizer checkpoints. User T4 run completed ten epochs and all metrics (20261119_052637_f9ddec); serialization passed, interrupted-training recovery (to verify). |
+
+| 19 | A100 one-epoch SGD/SAM/IGR timing before full experiment | Code lead | Nov 18 | Notebook 08 prepared: 45k train / 5k validation, batch 128, one epoch per method after discarded warm-up, independent processes, real timing/optional checkpoint and budget projection only. Local checks passed; A100 execution/memory (to verify). |
 
 Owners marked TBD should be filled in at the next meeting. Each task should have exactly one owner, even if several people help.
 
@@ -139,6 +141,10 @@ Owners marked TBD should be filled in at the next meeting. Each task should have
 The report is 4 pages excluding references and appendix, in a standard conference template. The appendix must contain extra plots, hyperparameters, failed attempts, a link to our code, a short statement of who did what, and a statement of how AI tools were used. We are allowed to use AI tools to understand the paper, debug code, and polish writing, but not to generate the analysis or conclusions, and every member must be able to explain the report if the TAs ask. To make the appendix statement easy, **each member should keep a running note of where they used AI help** (which task, which tool), added to the bottom of this file. Report failed runs and changed plans honestly, and do not adjust the experiment after seeing results to make it say something. Check-in and report-review milestones are not graded separately, but groups that skip them rarely do well, so everyone should come prepared.
 
 ## 12. Changelog
+
+- **2026-11-18**: Added requested English A100 teammate handoff with audited T4 intermediate observations, exact notebook 08 configuration and output/budget instructions. Updated notebook 07 execution status; new A100 test remains unexecuted. No messages sent or Git publication performed.
+
+- **2026-11-18**: Prepared standalone A100 timing notebook 08 for one epoch per SGD/SAM/IGR, retaining original ResNet pilot updates, full train/validation split and user batch 128. Added fresh-state warm-up separation, actual epoch measurements and scenario-only budget projection; no full training or GPU launch.
 
 - **2026-11-18**: Updated README for the newly added CIFAR-100 notebooks 06/07, their exact configurations/status, free T4 setup, validation/test protocol, timing limits and intermediate checkpoint recovery. Kept upstream README and original workflows intact; no new experiment or results directory.
 
@@ -191,6 +197,10 @@ The report is 4 pages excluding references and appendix, in a standard conferenc
 - **2026-10-20**: Tracker created. Environment working on Colab T4, SAM and SGD smoke tests passed, code findings documented, shared notebook prepared. A100 setup and first real reproduction not yet started.
 
 ## 13. AI-usage log (for the appendix statement)
+
+- **2026-11-18**: Codex drafted two teammate messages and a technical Markdown handoff using previously audited run data and current notebook settings; checked documentation/code consistency. No new GPU results or report conclusions generated.
+
+- **2026-11-18**: Codex reused existing experiment code to implement the requested bounded A100 timing notebook, checked scientific-update identity, exercised one-epoch/launcher/checkpoint control flow with substituted numerical operations and tested the real report/projection arithmetic. No measured A100 results or scientific conclusions generated.
 
 - **2026-11-18**: Codex checked current notebook configuration and implementation against documentation, added the Colab guide and experiment mapping, and verified links/configuration consistency. No GPU run or scientific conclusion generated.
 
