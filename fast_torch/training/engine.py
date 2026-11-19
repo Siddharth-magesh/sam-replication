@@ -22,16 +22,19 @@ def atomic(path, value):
 
 def main(method=None):
     p = argparse.ArgumentParser()
-    p.add_argument('--mode', choices=['benchmark', 'train'], required=True)
+    p.add_argument('--mode', choices=['benchmark', 'train', 'pilot'], required=True)
     p.add_argument('--method', choices=['SAM', 'SGD'], default=method or 'SAM')
     p.add_argument('--case', choices=list(CASES), default='reference')
-    p.add_argument('--archive', type=Path, required=True); p.add_argument('--init', type=Path, required=True)
+    p.add_argument('--archive', type=Path, required=True); p.add_argument('--init', type=Path)
     p.add_argument('--output', type=Path, required=True); p.add_argument('--config', type=Path, required=True)
     p.add_argument('--steps', type=int, default=100); p.add_argument('--warmup', type=int, default=5)
     p.add_argument('--resume', action='store_true'); p.add_argument('--approval', type=Path)
     args = p.parse_args()
     assert os.environ.get('FAST_TORCH_SUPERVISED') == '1', 'Use bounded launcher; do not start engine directly'
-    assert not args.resume or args.mode == 'train'
+    assert not args.resume or args.mode in ('train', 'pilot')
+    pilot = args.mode == 'pilot'
+    assert pilot or args.init, 'Benchmark/full training requires exported JAX initialization'
+    assert not pilot or (args.case == 'reference' and args.init is None), 'Pilot uses labeled PyTorch initialization only'
     assert 1 <= args.steps <= 100 and 1 <= args.warmup <= 10
     started = time.perf_counter(); case = CASES[args.case]; configure(case)
     cfg = json.loads(args.config.read_text())
@@ -40,15 +43,20 @@ def main(method=None):
     assert cfg['rho'] == .05 and cfg['momentum'] == .9 and cfg['clip'] == 5.
     assert cfg['subbatch_size'] == 32 and cfg['nesterov'] is True and cfg['warmup'] == 0
     assert cfg['schedule'] == 'cosine' and cfg['augmentation'] == 'basic_reflect'
-    assert torch.cuda.is_available() and 'A100' in torch.cuda.get_device_name(0), 'A100 validation/benchmark required'
+    assert not pilot or cfg['epochs'] == 50, 'Pilot keeps the 50-epoch cosine schedule'
+    assert torch.cuda.is_available(), 'Install CUDA-enabled PyTorch'
+    assert pilot or 'A100' in torch.cuda.get_device_name(0), 'A100 validation/benchmark required'
     source = Path(__file__).resolve().parents[1]
     source_hash = hashlib.sha256(b''.join(str(f.relative_to(source)).encode()+f.read_bytes() for f in sorted(source.rglob('*.py')))).hexdigest()
     identity = dict(config=cfg, method=args.method, case=case, torch=torch.__version__,
         cuda=torch.version.cuda, cudnn=torch.backends.cudnn.version(), python=platform.python_version(),
-        init_sha256=hashlib.sha256(args.init.read_bytes()).hexdigest(), data_sha256=ARCHIVE_SHA256,
+        init_sha256=hashlib.sha256(args.init.read_bytes()).hexdigest() if args.init else None, data_sha256=ARCHIVE_SHA256,
         source_sha256=source_hash, gpu=torch.cuda.get_device_name(0),
         cudnn_tf32=torch.backends.cudnn.allow_tf32, matmul_tf32=torch.backends.cuda.matmul.allow_tf32,
         independent_implementation=True, jax_update_parity='unverified')
+    if pilot:
+        identity.update(mode='two_epoch_functional_pilot', stop_after_epochs=2,
+                        initialization='PyTorch seed 0, NOT imported JAX weights')
     if args.mode == 'train':
         assert args.approval, 'Training requires reviewed parity/benchmark approval; see README'
         approval = json.loads(args.approval.read_text())
@@ -66,7 +74,12 @@ def main(method=None):
         atomic(manifest, identity)
     torch.manual_seed(cfg['seed'])
     model = WideResNet()
-    state, _, _, _ = load_export(args.init, model)
+    if args.init:
+        state, _, _, _ = load_export(args.init, model)
+    else:
+        state = model.initial_bn()
+        initial_hash = hashlib.sha256(b''.join(p.detach().numpy().tobytes() for p in model.parameters())).hexdigest()
+        atomic(args.output/'initialization.json', dict(parameters_sha256=initial_hash, seed=cfg['seed']))
     model = model.cuda()
     if case['channels_last']: model.to(memory_format=torch.channels_last)
     state = {k: v.cuda().expand(8, -1).clone() for k, v in state.items()}
@@ -108,27 +121,38 @@ def main(method=None):
             result['compiler_instrumentation_note'] = 'Nested compiler timings overlap; do not sum them as wall time.'
         atomic(args.output/'benchmark.json', result); print(json.dumps(result), flush=True)
         return
-    for epoch in range(first_epoch, cfg['epochs']):
-        sync(); start = time.perf_counter(); count = 0
+    for epoch in range(first_epoch, 2 if pilot else cfg['epochs']):
+        torch.cuda.reset_peak_memory_stats()
+        sync(); start = time.perf_counter(); count = 0; train_loss = 0.
         for batch in train_batches(data['train'], cfg['seed'], epoch, 'cuda'):
             lr = .1*.5*(1+math.cos(math.pi*global_step/(195*cfg['epochs'])))
-            loss = update(batch, lr); global_step += 1; count += 1
-            if count%25 == 0: print(args.method, epoch+1, count, 'loss', loss, flush=True)
+            loss = update(batch, lr); global_step += 1; count += 1; train_loss += loss
+            if count == 1 or count%25 == 0: print(args.method, epoch+1, count, '/195 loss', loss, flush=True)
         assert count == 195
         sync(); train_seconds = time.perf_counter()-start
-        means = {k: v.mean(0) for k, v in state.items()}; correct = 0; seen = 0
+        eval_start = time.perf_counter()
+        means = {k: v.mean(0) for k, v in state.items()}; correct = 0; seen = 0; test_loss = 0.
         with torch.no_grad():
             for images, labels in eval_batches(data['test'], 'cuda'):
                 logits, _ = model(images, means, False)
+                assert bool(torch.isfinite(logits).all()), 'Non-finite evaluation logits'
+                test_loss += float(torch.nn.functional.cross_entropy(logits, labels, reduction='sum'))
                 correct += int((logits.argmax(1) == labels).sum()); seen += len(labels)
         assert seen == 10000
-        row = dict(epoch=epoch+1, test_error_pct=100*(1-correct/seen), train_seconds=train_seconds, last_lr=lr)
+        sync()
+        row = dict(epoch=epoch+1, method=args.method, test_error_pct=100*(1-correct/seen),
+                   test_accuracy_pct=100*correct/seen, test_loss=test_loss/seen, test_examples=seen,
+                   train_seconds=train_seconds, eval_seconds=time.perf_counter()-eval_start, last_lr=lr,
+                   train_loss=train_loss/count, train_loss_note='SAM perturbed-pass CE; SGD unperturbed CE',
+                   peak_allocated_gib=torch.cuda.max_memory_allocated()/2**30,
+                   peak_reserved_gib=torch.cuda.max_memory_reserved()/2**30)
         history.append(row)
         temp = args.output/'checkpoint.tmp'
         torch.save(dict(model=model.state_dict(), optimizer=stepper.optimizer.state_dict(), bn=state,
                         epoch=epoch+1, step=global_step, history=history), temp)
         temp.replace(args.output/'checkpoint.pt'); atomic(args.output/'history.json', history)
         print(json.dumps(row), flush=True)
-    atomic(args.output/'final.json', dict(status='complete', final_epoch=history[-1], identity=identity))
+    atomic(args.output/'final.json', dict(status='pilot_complete_parity_unverified' if pilot else 'complete',
+                                        final_epoch=history[-1], identity=identity))
 
 if __name__ == '__main__': main()

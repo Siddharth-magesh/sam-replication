@@ -8,6 +8,36 @@ Model parameter count derives from layer shapes: **36,220,634**, confirmed on th
 
 ## Environment and CPU checks
 
+### Colab L4/A100: two-epoch functional pilot
+
+This user-requested pilot does not certify JAX equivalence. It uses the same independent WRN/Stepper implementation, sequential eight logical sub-batches, true FP32 and seed 0 for both methods, but **PyTorch initialization, not imported JAX tensors**. It stops automatically after two epochs of SAM and two of SGD while keeping the **50-epoch** cosine schedule. Original A100 benchmark and full-training parity gates remain intact. L4 runtime, memory fit and accuracy are **(to verify)**. Cross-GPU times are not a framework speed comparison.
+
+In the existing Colab checkout, run this cell (use a GPU runtime):
+
+```python
+%cd /content/sam-replication
+!git pull --ff-only origin fast-pytorch-sam
+!python -u -B -m fast_torch.scripts.colab_pilot --execute
+```
+
+For a fresh Colab session, first clone:
+
+```python
+!git clone --branch fast-pytorch-sam --single-branch https://github.com/Siddharth-magesh/sam-replication.git /content/sam-replication
+```
+
+The helper checks for an idle L4/A100 and driver >=560.28.03, creates `/content/fast_torch_pilot_env` without ensurepip, and uses host pip's `--python` option to install the official pinned torch 2.9.0 CUDA 12.6 wheel and NumPy 2.2.6 into that new environment. It leaves the CPU/JAX environments alone and validates versions on reuse. CIFAR's official binary archive is downloaded once into `/content/fast_torch_data/` and SHA256 checked. Setup failures print their actual output. No work occurs without `--execute`.
+
+Results are in the printed `/content/fast_torch_pilot_runs/<id>/` directory: per-method `worker.log`, `history.json`, `checkpoint.pt`, `initialization.json`, `manifest.json`, `final.json`, GPU samples and a supervisor GPU-hour receipt. Epoch rows include test accuracy/loss, train/evaluation seconds and peak allocated/reserved GPU GiB; first-epoch training includes first-use overhead. The two `initialization.json` parameter hashes should match. Setup and idle allocation time are excluded from the supervisor's receipt. The total pilot execution is capped at **60 minutes**, not estimated to finish within it. A timeout saves previously completed epochs, reports failure and leaves the Colab runtime active. Colab disconnection can still end a runtime; download results before releasing it.
+
+Resume the same two-epoch pilot after an interruption (do not change source/config/environment):
+
+```python
+!python -u -B -m fast_torch.scripts.colab_pilot --execute --resume --output /content/fast_torch_pilot_runs/REPLACE_WITH_ID
+```
+
+Do not manually stop at epoch two: SAM stops and SGD starts automatically. Separate 60-minute attempts produce separate receipts; account for all of them. The existing CPU checks passed in the user's Colab, but they do not establish full-model CUDA/JAX equivalence.
+
 Run from this branch's checkout. Paths below are **new**, separate from all JAX/general environments. CPU validation needs no dataset or GPU.
 
 ```bash
