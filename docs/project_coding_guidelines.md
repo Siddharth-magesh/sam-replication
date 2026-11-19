@@ -15,6 +15,7 @@ Repo: `Siddharth-magesh/sam-replication`, a fork of `google-research/sam`. Goal:
 sam_jax/        authors' code. Change as little as possible; patches isolated and documented
 requirements.txt  original pins. Do not edit; record env fixes in docs/NOTES.md
 experiments/    launch scripts, one per run config
+fast_torch/     independent PyTorch implementation (task-specific fast-pytorch-sam branch only)
 analysis/       scripts that read run outputs and produce tables/plots
 results/        small final results only (csv, json, png)
 notebooks/      Colab notebook, outputs cleared before commit
