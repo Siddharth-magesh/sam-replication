@@ -34,7 +34,7 @@ Only rho differs between the two runs.
 
 The selected-run budget guard is already fixed: it checks only RUN_SELECTION against the remaining cumulative 40-hour worker budget, including preflight and earlier attempts. The nine-run estimate is informational only.
 
-For script execution on csci567-sam, use `experiments/cifar10_first_comparison/` and the first-comparison instructions at the top of `docs/jetstream_runbook.md`. Setup creates the pinned Linux Python 3.8/CUDA environment on the persistent volume; do not use the system Python for the training worker. Both full A100 preflights passed in session `20261118_143021` on November 18, 2026. The 200-epoch experiments have not started; the measured planning estimate exceeds the remaining budget.
+For script execution on csci567-sam, use `experiments/cifar10_first_comparison/` and the first-comparison instructions at the top of `experiments/cifar10_wrn28x10_sam_sgd_50epochs_seed0/jetstream_runbook.md`. Setup creates the pinned Linux Python 3.8/CUDA environment on the persistent volume; do not use the system Python for the training worker. Both full A100 preflights passed in session `20261118_143021` on November 18, 2026. The 200-epoch experiments have not started; the measured planning estimate exceeds the remaining budget.
 
 ## Measured preflight and time estimate (A100)
 

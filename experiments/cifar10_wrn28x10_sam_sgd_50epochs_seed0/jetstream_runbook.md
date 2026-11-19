@@ -40,7 +40,7 @@ Results live in `/workspace/sam_paper_replication/runs_sgd50/<session>/`; existi
 
 **Latest state (November 18): both full preflights passed.** Session `/workspace/sam_paper_replication/runs/20261118_143021`, revision `77cd455`, with both determinism options. SGD and SAM passed numerical, eight-lane BatchNorm, full one-epoch/evaluation and checkpoint-restoration checks. Do not repeat setup or preflight for this unchanged session.
 
-**Budget blocks the unchanged pair:** the launcher printed SAM-200 **45.84 h** and SGD-200 **14.20 h**, including the existing 20% allowance: **60.04 h combined**, versus **38.03 h remaining** in the 40-hour ledger. These are conservative first-epoch extrapolations, not observed 200-epoch runtimes. Review the saved step timings before changing the plan; the SAM steady-state/compilation breakdown is **(to verify)**. See [run_config.md](../run_config.md) for measured times and memory.
+**Budget blocks the unchanged pair:** the launcher printed SAM-200 **45.84 h** and SGD-200 **14.20 h**, including the existing 20% allowance: **60.04 h combined**, versus **38.03 h remaining** in the 40-hour ledger. These are conservative first-epoch extrapolations, not observed 200-epoch runtimes. Review the saved step timings before changing the plan; the SAM steady-state/compilation breakdown is **(to verify)**. See [run_config.md](../../run_config.md) for measured times and memory.
 
 The user turned off the instance. Keep it off during offline analysis. The commands below are reference workflows, **not instructions to relaunch now**. Preserve this successful SESSION, both runtime options and the worker revision for any later continuation. No main training has started. Documentation-only updates do not change the saved worker.
 
@@ -313,7 +313,7 @@ The runner imports the original SAM code at pinned fork commit `f7b9ff46ee0deab8
 | `repro_notebooks/03_cifar10_resnet18_nesterov_followup.ipynb` | Completed Nesterov follow-up | Preserved with executed outputs |
 | `sam_jax/` | Authors' implementation | Unchanged; runtime uses a separate pinned checkout under WORK_ROOT/work/sam |
 | `requirements.txt` | Original dependency pins | Unchanged |
-| `docs/jetstream_runbook.md` | This runbook | Give this file to another chat or teammate |
+| `experiments/cifar10_wrn28x10_sam_sgd_50epochs_seed0/jetstream_runbook.md` | This runbook | Give this file to another chat or teammate |
 | `docs/notes.md` | Technical findings and failed/successful attempt history | Preserve failures and deviations |
 | `docs/project_tracking.md` | Task status and AI-usage history | Update after verified runs |
 
@@ -472,7 +472,7 @@ The runner requires all selected work to fit the experiment ledger; the separate
 ## 11. Copy this prompt into another chat
 
 ```text
-Read docs/jetstream_runbook.md, docs/project_coding_guidelines.md,
+Read experiments/cifar10_wrn28x10_sam_sgd_50epochs_seed0/jetstream_runbook.md, docs/project_coding_guidelines.md,
 docs/notes.md and docs/project_tracking.md before acting.
 
 We are replicating the SAM paper's WRN-28-10/CIFAR-10 Table 1 row using

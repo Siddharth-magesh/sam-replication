@@ -25,6 +25,7 @@ Do not move, rename or restructure `sam_jax/`. The package must still run as `py
 ## Markdown rules
 - Only these md files exist: root `README.md`, `docs/PROJECT_TRACKING.md`, `docs/NOTES.md`, this file. Update them; do not create new ones.
 - A new md file only if the user asks. Then it goes in `docs/` (or `docs/<topic>/`) with a descriptive snake_case name.
+- User-directed organization (November 19): run instructions and experiment handoffs belong beside their scripts under `experiments/<config>/`; completed analyses live under `docs/results/`, historical diagnostics under `docs/archive/`. Keep the core notes/tracking/guidelines in docs and update the docs index and links when moving files.
 - Links to code or results in docs point to the `repro` branch (`.../blob/repro/<path>`), never `main`.
 
 ## Never commit

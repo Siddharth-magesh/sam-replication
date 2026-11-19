@@ -1,3 +1,7 @@
+## Current run instructions
+
+[A100 one-epoch SGD/SAM/IGR timing (Python/tmux)](experiments/cifar100_resnet18_a100_one_epoch_timing/instructions.md) | [Completed CIFAR-10 results](docs/results/js2_50epoch_results_analysis.md) | [Documentation index](docs/README.md)
+
 # SAM replication and input-gradient regularization experiments
 
 This CSCI 567 project builds on the original `google-research/sam` JAX/Flax implementation. It includes a WideResNet-28-10 / CIFAR-10 reproduction workflow and a separate ResNet-18 / CIFAR-100 comparison of SGD, SAM and Input Gradient Regularization (IGR).
@@ -13,7 +17,7 @@ The experiment notebooks belong in `repro_notebooks/`. The objective is to compa
 
 For **A100 runtime planning before the full experiment**, use [08: one epoch per method](https://github.com/Siddharth-magesh/sam-replication/blob/repro/repro_notebooks/08_cifar100_resnet18_a100_one_epoch_timing.ipynb). It uses 45,000 training / 5,000 validation images, batch 128, and exactly one measured epoch each of SGD, SAM and IGR after discarded warm-up. A100 with at least 38,000 MiB is required. It exports actual epoch/validation/checkpoint times and a configurable projection for 100 epochs and three seeds; it never launches that projected study. New A100 timing execution is pending. In Colab upload the local notebook; on the course Linux Jupyter instance set `WORK_ROOT` to a persistent mounted path. `RUN_TIMING=True` starts only the bounded timing run.
 
-For the teammate handoff, use [A100 timing instructions and audited T4 observations](https://github.com/Siddharth-magesh/sam-replication/blob/repro/docs/igr_a100_timing_handoff.md). It includes the exact course-machine configuration, expected ZIP files and budget assumptions.
+For the teammate handoff, use [A100 timing instructions and audited T4 observations](https://github.com/Siddharth-magesh/sam-replication/blob/repro/experiments/cifar100_resnet18_a100_one_epoch_timing/background.md). It includes the exact course-machine configuration, expected ZIP files and budget assumptions.
 
 **Notebook 07 remains the intermediate T4 experiment.** It adds ten warm-up updates before twenty timed updates, a timing-stability check, validation input-sensitivity curves and optimizer/BatchNorm checkpoints after every completed epoch. The earlier pilot's short benchmark included a very slow first measured update and overestimated sustained training cost; do not treat notebook 06's timing projection as a reliable full-run estimate.
 

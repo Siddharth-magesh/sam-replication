@@ -19,7 +19,7 @@ This supports the direction of SAM's generalization benefit in this reduced setu
 | Epochs completed | 50 | 50 |
 | Resumed | No | No |
 
-[Final result CSV](../results/js2_50epoch_summary/final_results.csv)
+[Final result CSV](../../results/js2_50epoch_summary/final_results.csv)
 
 ## Configuration and execution checks
 
@@ -49,7 +49,7 @@ Inspection of the downloaded evidence confirmed:
 | 45 | 96.17% | 95.58% |
 | 50 | 96.24% | 95.63% |
 
-![Saved learning curves and epoch timings](../results/js2_50epoch_summary/learning_curves.png)
+![Saved learning curves and epoch timings](../../results/js2_50epoch_summary/learning_curves.png)
 
 Both methods learned rapidly early on and continued improving as the learning rate decreased. SGD was ahead at epochs 1 and 5; SAM was ahead at epochs 10, 20, 30, 40 and 50. Thus the first few epochs alone would not have predicted the final comparison reliably.
 
@@ -79,9 +79,9 @@ Preserve this pair as the primary result. A useful next experiment, subject to b
 
 ## Preserved evidence
 
-- [Extracted session](../results/js2_50epoch/extracted/runs_50epoch/20261118_231039_f309d8/): configuration, worker/supervisor snapshots, manifests, diagnostics, logs, histories and retained checkpoints.
-- [Original archive](../results/js2_50epoch/sam_50epoch_results.tar.gz), preserved unchanged. SHA-256: `5b4d87513f0ecd1539c3a264fac9d1ad898c96eed493c92cb79cd2faee6acfe0`; previously matched against the remote archive.
-- [Budget snapshot](../results/js2_50epoch/extracted/gpu_budget.json).
-- [SAM history](../results/js2_50epoch/extracted/runs_50epoch/20261118_231039_f309d8/train/SAM-50_seed_0/history.json) and [SGD history](../results/js2_50epoch/extracted/runs_50epoch/20261118_231039_f309d8/train/SGD-50_seed_0/history.json).
+- [Extracted session](../../results/js2_50epoch/extracted/runs_50epoch/20261118_231039_f309d8): configuration, worker/supervisor snapshots, manifests, diagnostics, logs, histories and retained checkpoints.
+- [Original archive](../../results/js2_50epoch/sam_50epoch_results.tar.gz), preserved unchanged. SHA-256: `5b4d87513f0ecd1539c3a264fac9d1ad898c96eed493c92cb79cd2faee6acfe0`; previously matched against the remote archive.
+- [Budget snapshot](../../results/js2_50epoch/extracted/gpu_budget.json).
+- [SAM history](../../results/js2_50epoch/extracted/runs_50epoch/20261118_231039_f309d8/train/SAM-50_seed_0/history.json) and [SGD history](../../results/js2_50epoch/extracted/runs_50epoch/20261118_231039_f309d8/train/SGD-50_seed_0/history.json).
 
 Extraction rejected links and paths outside the destination. The instance was confirmed `SHELVED_OFFLOADED` after verified download. Raw archives/checkpoints remain local and are excluded from Git; only the small curated summary and this report are intended for sharing.

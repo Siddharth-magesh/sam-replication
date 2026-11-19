@@ -116,13 +116,13 @@ One full comparison (SAM, SGD-200, SGD-400) is roughly 12 to 16 A100-hours. The 
 | 13 | Jetstream background launcher for csci567-sam | Code lead | Nov 18 | Both full A100 preflights passed in 20261118_143021. Estimated pair 60.04 h exceeds remaining 38.03 h; no main training. Colab code/settings match; performance breakdown (to verify). Instance turned off by user. |
 | 14 | Colab ten-epoch measured timing pilot | Code lead | Nov 18 | Three supplied L4 attempts failed during setup; no training. Fixed cuDNN metadata guard in clean notebook, validated GPU snippet and added early syntax checks. Existing-environment reuse verified with mocks; ten-epoch completion/timing/accuracy (to verify). Executed notebook and failure logs preserved. |
 
-| 15 | Reduced JS2 SAM-50 / SGD-50 comparison | Code lead | Nov 19 | Completed and archived: SAM 3.76% / SGD 4.37% final test error; seed 0, 50 epochs each. Preflights/checkpoint hashes verified; 11.7176 h session charge. Detailed analysis in js2_50epoch_results_analysis.md; multi-seed reproducibility (to verify). |
+| 15 | Reduced JS2 SAM-50 / SGD-50 comparison | Code lead | Nov 19 | Completed and archived: SAM 3.76% / SGD 4.37% final test error; seed 0, 50 epochs each. Preflights/checkpoint hashes verified; 11.7176 h session charge. Detailed analysis in docs/results/js2_50epoch_results_analysis.md; multi-seed reproducibility (to verify). |
 | 16 | Optional separate original JAX SGD-50 launcher | Code lead | Nov 18 | SGD-only wrapper and separate result tree prepared; original worker/locks/budget retained. Concurrent launch blocked by active SAM reservation; serial alternative only. Runtime (to verify). |
 
 | 17 | CIFAR-100 / ResNet-18 SGD, SAM and IGR functional pilot | Code lead | Nov 18 | Notebook 06: 1k training images, two epochs, one seed, validation-only lambda selection. User-run T4 pipeline completed; not a hypothesis conclusion. |
 | 18 | CIFAR-100 intermediate T4 comparison | Code lead | Nov 18 | Notebook 07: 5k train, ten epochs, three-epoch lambda trials, warm-up/stability timing, validation sensitivity and epoch optimizer checkpoints. User T4 run completed ten epochs and all metrics (20261119_052637_f9ddec); serialization passed, interrupted-training recovery (to verify). |
 
-| 19 | A100 one-epoch SGD/SAM/IGR timing before full experiment | Code lead | Nov 18 | Notebook 08 prepared: 45k train / 5k validation, batch 128, one epoch per method after discarded warm-up, independent processes, real timing/optional checkpoint and budget projection only. Local checks passed; A100 execution/memory (to verify). |
+| 19 | A100 one-epoch SGD/SAM/IGR timing before full experiment | Code lead | Nov 18 | Notebook 08 and experiments/cifar100_resnet18_a100_one_epoch_timing Python CLI prepared: 45k train / 5k validation, batch 128, one epoch per method after discarded warm-up, independent processes, real timing/optional checkpoint and budget projection only. Local checks passed; A100 execution/memory (to verify). |
 
 Owners marked TBD should be filled in at the next meeting. Each task should have exactly one owner, even if several people help.
 
@@ -141,6 +141,8 @@ Owners marked TBD should be filled in at the next meeting. Each task should have
 The report is 4 pages excluding references and appendix, in a standard conference template. The appendix must contain extra plots, hyperparameters, failed attempts, a link to our code, a short statement of who did what, and a statement of how AI tools were used. We are allowed to use AI tools to understand the paper, debug code, and polish writing, but not to generate the analysis or conclusions, and every member must be able to explain the report if the TAs ask. To make the appendix statement easy, **each member should keep a running note of where they used AI help** (which task, which tool), added to the bottom of this file. Report failed runs and changed plans honestly, and do not adjust the experiment after seeing results to make it say something. Check-in and report-review milestones are not graded separately, but groups that skip them rarely do well, so everyone should come prepared.
 
 ## 12. Changelog
+
+- **2026-11-19**: Packaged notebook 08 as explicit-execution Python/tmux timing scripts with read-only legacy environment reuse, idle-device locks and evidence export. Organized experiment guides/results/archive documentation. Source identity and local CLI/report checks passed; GPU run (to verify).
 
 - **2026-11-19**: Extracted and analyzed completed original JAX 50-epoch pair; created results report and preserved curated learning curves/CSV. Verified complete finite histories and retained checkpoint hashes; raw archive/extraction excluded from Git.
 
@@ -199,6 +201,8 @@ The report is 4 pages excluding references and appendix, in a standard conferenc
 - **2026-10-20**: Tracker created. Environment working on Colab T4, SAM and SGD smoke tests passed, code findings documented, shared notebook prepared. A100 setup and first real reproduction not yet started.
 
 ## 13. AI-usage log (for the appendix statement)
+
+- **2026-11-19**: Codex extracted the unchanged notebook training/report sources, added bounded host orchestration, organized docs and verified source/configuration identity plus projection arithmetic. No training or hypothesis conclusions; preserved the user's notebook 07 edits.
 
 - **2026-11-19**: Codex extracted preserved results, checked evidence consistency, calculated descriptive accuracy/timing comparisons and drafted the report. No new training, statistical significance claim or fabricated measurements.
 
