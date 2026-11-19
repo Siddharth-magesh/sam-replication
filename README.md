@@ -1,10 +1,16 @@
 ## Current run instructions
 
-[A100 one-epoch SGD/SAM/IGR timing (Python/tmux)](experiments/cifar100_resnet18_a100_one_epoch_timing/instructions.md) | [Completed CIFAR-10 results](docs/results/js2_50epoch_results_analysis.md) | [Documentation index](docs/README.md)
+[Full A100 SGD/SAM/IGR study](experiments/cifar100_resnet18_sam_igr_full/instructions.md) | [A100 one-epoch SGD/SAM/IGR timing (Python/tmux)](experiments/cifar100_resnet18_a100_one_epoch_timing/instructions.md) | [Completed CIFAR-10 results](docs/results/js2_50epoch_results_analysis.md) | [Documentation index](docs/README.md)
 
 # SAM replication and input-gradient regularization experiments
 
 This CSCI 567 project builds on the original `google-research/sam` JAX/Flax implementation. It includes a WideResNet-28-10 / CIFAR-10 reproduction workflow and a separate ResNet-18 / CIFAR-100 comparison of SGD, SAM and Input Gradient Regularization (IGR).
+
+## Full CIFAR-100 study on A100
+
+Use [the complete Python/tmux runner](experiments/cifar100_resnet18_sam_igr_full/instructions.md) for the next experiment. It runs three validation-only lambda trials, then 100 epochs for each of SGD/SAM/IGR on three fresh paired seeds, followed by final test metrics. It reuses the prepared pinned timing environment and dataset cache. Checkpoints allow interrupted runs to resume. Reports include per-seed results, mean/sample standard deviation and paired differences without an automated hypothesis conclusion.
+
+The default invocation prints the plan; `--execute` starts the study on the prepared course A100. The cumulative study cap defaults to 20 hours, subject to the team's actual remaining allocation. Supplied epoch measurements project approximately 15.02 hours including tuning, an unmeasured evaluation reserve and allowance. Stronger evaluation and interrupted GPU recovery remain to verify; no full-study training has been executed during code preparation. The full runner is separate from notebooks 06–08 and leaves their evidence intact.
 
 ## New CIFAR-100 notebooks
 
@@ -15,7 +21,7 @@ The experiment notebooks belong in `repro_notebooks/`. The objective is to compa
 | [06: small pilot](https://github.com/Siddharth-magesh/sam-replication/blob/repro/repro_notebooks/06_cifar100_resnet18_sam_igr_pilot.ipynb) | 1,000 images, 10 per class | 2 epochs, seed 42 | 1 epoch each for 0, 0.01, 0.1 | A user-run T4 pilot completed all three methods and metrics. Functional check only. |
 | [07: intermediate comparison](https://github.com/Siddharth-magesh/sam-replication/blob/repro/repro_notebooks/07_cifar100_resnet18_sam_igr_t4_intermediate.ipynb) | 5,000 images, 50 per class | 10 epochs, seed 42 | 3 epochs each for 0, 0.01, 0.1 | User-run T4 intermediate completed all ten epochs and metrics; optimizer/BN serialization check passed. Interrupted-training resume remains unverified. |
 
-For **A100 runtime planning before the full experiment**, use [08: one epoch per method](https://github.com/Siddharth-magesh/sam-replication/blob/repro/repro_notebooks/08_cifar100_resnet18_a100_one_epoch_timing.ipynb). It uses 45,000 training / 5,000 validation images, batch 128, and exactly one measured epoch each of SGD, SAM and IGR after discarded warm-up. A100 with at least 38,000 MiB is required. It exports actual epoch/validation/checkpoint times and a configurable projection for 100 epochs and three seeds; it never launches that projected study. New A100 timing execution is pending. In Colab upload the local notebook; on the course Linux Jupyter instance set `WORK_ROOT` to a persistent mounted path. `RUN_TIMING=True` starts only the bounded timing run.
+For **A100 runtime planning before the full experiment**, use [08: one epoch per method](https://github.com/Siddharth-magesh/sam-replication/blob/repro/repro_notebooks/08_cifar100_resnet18_a100_one_epoch_timing.ipynb). It uses 45,000 training / 5,000 validation images, batch 128, and exactly one measured epoch each of SGD, SAM and IGR after discarded warm-up. A100 with at least 38,000 MiB is required. It exports actual epoch/validation/checkpoint times and a configurable projection for 100 epochs and three seeds; it never launches that projected study. The teammate supplied completed A100 epoch measurements; the full-run cost remains an estimate. In Colab upload the local notebook; on the course Linux Jupyter instance set `WORK_ROOT` to a persistent mounted path. `RUN_TIMING=True` starts only the bounded timing run.
 
 For the teammate handoff, use [A100 timing instructions and audited T4 observations](https://github.com/Siddharth-magesh/sam-replication/blob/repro/experiments/cifar100_resnet18_a100_one_epoch_timing/background.md). It includes the exact course-machine configuration, expected ZIP files and budget assumptions.
 
