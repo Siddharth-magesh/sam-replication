@@ -17,6 +17,8 @@ HERE = Path(__file__).resolve().parent
 ROOT = Path('/workspace/sam_paper_replication')
 REVISION = 'f7b9ff46ee0deab8004d5508baf68b7e7c3dad1a'
 METHODS = ('SAM-50', 'SGD-50')
+SESSION_TREE = 'runs_50epoch'
+SESSION_POINTER = 'latest_50epoch_session.txt'
 # Actual user-supplied Colab setup attempts, excluding the already-carried prior baseline.
 COLAB_ATTEMPTS = (
     ('20261118_170159_9a51d2', 0.056612481114722224),
@@ -117,7 +119,7 @@ def main():
     for name in ('worker.py', 'supervisor.py', 'launch.py', 'report.py'):
         ast.parse((HERE/name).read_text(), feature_version=(3, 8))
     if not args.execute:
-        print('PLAN: csci567-sam A100 only; SAM-50 then SGD-50; seed 0; cosine over 50 epochs.')
+        print('PLAN: csci567-sam A100 only; '+', then '.join(METHODS)+'; seed 0; cosine over 50 epochs.')
         print('Reuse installed legacy stack/cache; strict preflight; shared 40-hour ledger; no auto-shelving.')
         print('No files, network, installation or GPU work. Add --execute to start.')
         return
@@ -136,13 +138,13 @@ def main():
         assert list((ROOT/'tensorflow_datasets/cifar10').glob('**/dataset_info.json')), 'Prepared CIFAR-10 cache missing'
         assert checked(['git', '-C', ROOT/'work/sam', 'rev-parse', 'HEAD']) == REVISION
         reconcile_ledger()
-        pointer = ROOT/'latest_50epoch_session.txt'
+        pointer = ROOT/SESSION_POINTER
         if args.resume:
             session = args.session or Path(pointer.read_text().strip())
         else:
-            session = ROOT/'runs_50epoch'/(time.strftime('%Y%m%d_%H%M%S')+'_'+uuid.uuid4().hex[:6])
+            session = ROOT/SESSION_TREE/(time.strftime('%Y%m%d_%H%M%S')+'_'+uuid.uuid4().hex[:6])
         session = session.resolve()
-        assert ROOT/'runs_50epoch' in session.parents, 'Use only this experiment session tree'
+        assert ROOT/SESSION_TREE in session.parents, 'Use only this experiment session tree'
         if args.resume: assert (session/'config.json').is_file(), 'Resume session missing'
         runner = configure(session)
         runner.prepare_session()
@@ -155,7 +157,8 @@ def main():
         signal.signal(signal.SIGTERM, interrupted)
         try:
             for method in ('SGD-50', 'SAM-50'):
-                runner.launch('preflight', method, 0)
+                if method in METHODS:
+                    runner.launch('preflight', method, 0)
             available = min(runner.budget_snapshot()['remaining_hours'],
                             (float(os.environ['SAM_INVOCATION_STOP'])-time.monotonic())/3600)
             predicted = estimate(runner)

@@ -1,5 +1,41 @@
 # SAM replication on Jetstream2: runbook and chat handoff
 
+## Optional separate SGD-50 checkout (November 18)
+
+The current 50-epoch launcher already runs SAM then SGD automatically. Keeping it running is the simplest option. A separate clone does **not** enable safe concurrency: the active launcher holds the global launcher/budget locks, and its supervisor reserves the remaining allowance. Do not delete locks, reset/copy the ledger, or run the worker directly to bypass them. Spare VRAM is not spare compute; concurrency can slow SAM and invalidates isolated timing comparisons. A coordinated concurrent supervisor cannot be retrofitted into the already-running process by pulling code.
+
+Prepared optional SGD-only entry point: `experiments/cifar10_wrn28x10_sgd_50epochs_seed0/run.py`. Reuses the exact original worker, strict SGD preflight, installed legacy environment, dataset, 40-hour ledger and checkpoint recovery. No package installation, SAM launch, source checkout mutation or auto-shelving. It retains the busy-GPU/lock guards and therefore must run **after the original launcher has exited**. Runtime of this entry point is **(to verify)**. Do not run an extra SGD if the original launcher is already training it; keep that run instead.
+
+If choosing the separate checkout, cloning is safe during SAM:
+
+```bash
+cd /workspace
+git clone --branch repro --single-branch https://github.com/Siddharth-magesh/sam-replication.git sam-replication-sgd50
+cd /workspace/sam-replication-sgd50
+git pull --ff-only origin repro
+python3 -B experiments/cifar10_wrn28x10_sgd_50epochs_seed0/run.py
+```
+
+Only after SAM epoch 50 has been checkpointed and the original launcher has exited (or been interrupted with Ctrl-C in its own tmux, allowing supervisor cleanup), launch in a new tmux session. Do not terminate the VM or kill arbitrary GPU PIDs. If original SGD has already begun, avoid discarding it just to use a different folder.
+
+```bash
+tmux new -s sgd50
+cd /workspace/sam-replication-sgd50
+git pull --ff-only origin repro
+python3 -u -B experiments/cifar10_wrn28x10_sgd_50epochs_seed0/run.py --execute --max-hours 8
+```
+
+Eight hours is an invocation limit, not a runtime promise; preflight checks it against remaining budget. Detach with Ctrl-b then d. Resume after interruption using the same command plus `--resume`. The selected estimate includes only SGD. The default pair command and existing SAM config/worker remain unchanged; new launcher paths do not modify the running process.
+
+Results and monitor:
+
+```bash
+cat /workspace/sam_paper_replication/latest_sgd50_session.txt
+tail -n 30 -F "$(cat /workspace/sam_paper_replication/latest_sgd50_session.txt)/train_SGD-50_seed_0.log"
+```
+
+Results live in `/workspace/sam_paper_replication/runs_sgd50/<session>/`; existing SAM results stay in `runs_50epoch`. The pointer is written before preflight, so the train log appears after preflight succeeds. Comparison/reporting across the two sessions is separate.
+
 ## Current first comparison: follow run_config.md
 
 **Latest state (November 18): both full preflights passed.** Session `/workspace/sam_paper_replication/runs/20261118_143021`, revision `77cd455`, with both determinism options. SGD and SAM passed numerical, eight-lane BatchNorm, full one-epoch/evaluation and checkpoint-restoration checks. Do not repeat setup or preflight for this unchanged session.
