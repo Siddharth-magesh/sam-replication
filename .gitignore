@@ -22,3 +22,6 @@ authoritative_gpu_budget.json
 cifar-10-*.tar.gz
 
 experimental_results/
+
+# Downloaded JS2 archive and raw checkpoints; curated summary lives separately.
+results/js2_50epoch/

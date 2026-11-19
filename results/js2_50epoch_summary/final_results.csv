@@ -1,0 +1,3 @@
+method,completed_epoch,final_test_error_pct,final_test_accuracy_pct,training_hours
+SAM-50,50,3.76,96.24000000000001,8.722363925341392
+SGD-50,50,4.37,95.63000000000001,2.529747776667783
