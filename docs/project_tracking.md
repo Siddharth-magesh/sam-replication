@@ -119,6 +119,9 @@ One full comparison (SAM, SGD-200, SGD-400) is roughly 12 to 16 A100-hours. The 
 | 15 | Reduced JS2 SAM-50 / SGD-50 comparison | Code lead | Nov 18 | Standalone Python scripts and short commands prepared; seed 0, 50-epoch cosine, strict preflight, persistent checkpoints/budget, no automatic shelving. Local checks passed; GPU execution (to verify). |
 | 16 | Optional separate original JAX SGD-50 launcher | Code lead | Nov 18 | SGD-only wrapper and separate result tree prepared; original worker/locks/budget retained. Concurrent launch blocked by active SAM reservation; serial alternative only. Runtime (to verify). |
 
+| 17 | CIFAR-100 / ResNet-18 SGD, SAM and IGR functional pilot | Code lead | Nov 18 | Notebook 06: 1k training images, two epochs, one seed, validation-only lambda selection. User-run T4 pipeline completed; not a hypothesis conclusion. |
+| 18 | CIFAR-100 intermediate T4 comparison | Code lead | Nov 18 | Notebook 07: 5k train, ten epochs, three-epoch lambda trials, warm-up/stability timing, validation sensitivity and epoch optimizer checkpoints. Prepared/locally checked; GPU execution/recovery (to verify). |
+
 Owners marked TBD should be filled in at the next meeting. Each task should have exactly one owner, even if several people help.
 
 ## 10. Risks and open questions
@@ -136,6 +139,8 @@ Owners marked TBD should be filled in at the next meeting. Each task should have
 The report is 4 pages excluding references and appendix, in a standard conference template. The appendix must contain extra plots, hyperparameters, failed attempts, a link to our code, a short statement of who did what, and a statement of how AI tools were used. We are allowed to use AI tools to understand the paper, debug code, and polish writing, but not to generate the analysis or conclusions, and every member must be able to explain the report if the TAs ask. To make the appendix statement easy, **each member should keep a running note of where they used AI help** (which task, which tool), added to the bottom of this file. Report failed runs and changed plans honestly, and do not adjust the experiment after seeing results to make it say something. Check-in and report-review milestones are not graded separately, but groups that skip them rarely do well, so everyone should come prepared.
 
 ## 12. Changelog
+
+- **2026-11-18**: Updated README for the newly added CIFAR-100 notebooks 06/07, their exact configurations/status, free T4 setup, validation/test protocol, timing limits and intermediate checkpoint recovery. Kept upstream README and original workflows intact; no new experiment or results directory.
 
 - **2026-11-18**: Prepared SGD-only serial wrapper on repro and separate-clone commands. Documented why current active SAM locks/reservations prevent safe concurrency; no changes to running SAM or original training algorithm.
 
@@ -186,6 +191,8 @@ The report is 4 pages excluding references and appendix, in a standard conferenc
 - **2026-10-20**: Tracker created. Environment working on Colab T4, SAM and SGD smoke tests passed, code findings documented, shared notebook prepared. A100 setup and first real reproduction not yet started.
 
 ## 13. AI-usage log (for the appendix statement)
+
+- **2026-11-18**: Codex checked current notebook configuration and implementation against documentation, added the Colab guide and experiment mapping, and verified links/configuration consistency. No GPU run or scientific conclusion generated.
 
 - **2026-11-18**: Codex inspected the original launcher/accounting protocol, prepared optional SGD-only dispatch and static/dry-run validation. No remote execution, concurrency performance claim or interruption of the active experiment.
 
