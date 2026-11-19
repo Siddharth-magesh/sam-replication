@@ -141,11 +141,13 @@ def main():
     parser.add_argument('--work-root', type=Path, default=Path('/workspace/sam_igr_a100_timing'))
     parser.add_argument('--reuse-env', type=Path, default=Path('/workspace/sam_paper_replication/envs/sam'))
     parser.add_argument('--study-dir', type=Path, help='Existing external study directory to resume')
+    parser.add_argument('--resume-latest', action='store_true', help='Resume the study recorded by this launcher')
     parser.add_argument('--budget-hours', type=float, default=20.,
                         help='Cumulative incremental study cap, including failed invocations; frozen at creation')
     parser.add_argument('--settle-interrupted-hours', type=float,
                         help='Replace a crashed invocation reservation with independently verified actual hours; no training')
     args = parser.parse_args()
+    assert not (args.resume_latest and args.study_dir), 'Choose --resume-latest or --study-dir'
     assert math.isfinite(args.budget_hours) and args.budget_hours>0
     sources = {name: (HERE/(name+'.py')).read_text() for name in ('run', 'worker', 'runtime', 'report')}
     for name, source in sources.items(): ast.parse(source, filename=name, feature_version=(3, 8))
@@ -175,11 +177,19 @@ def main():
             '--format=csv,noheader,nounits'], text=True, timeout=15).strip()
         assert 'A100' in gpu and float(gpu.rsplit(',', 1)[1])>=38000
         parent = root/'full_runs'; parent.mkdir(parents=True, exist_ok=True)
+        pointer = root/'latest_full_study.txt'
+        if args.resume_latest:
+            assert pointer.is_file(), 'No latest study pointer; use --study-dir with the printed STUDY path'
+            args.study_dir = Path(pointer.read_text().strip())
         if args.study_dir:
             study = args.study_dir.resolve()
             assert study.parent==parent and study.is_dir(), 'Resume only an existing full_runs study'
         else:
             assert args.settle_interrupted_hours is None
+            if pointer.exists():
+                last = Path(pointer.read_text().strip())
+                assert (last/'status.json').is_file() and read(last/'status.json')['status']=='complete', \
+                    'Previous study is unfinished. Use --resume-latest; do not start duplicate training.'
             assert args.budget_hours>=projection()['total_estimated_hours'], 'Cap below projected initial study cost'
             study = parent/(datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')+'_'+uuid.uuid4().hex[:6])
             study.mkdir()
@@ -195,6 +205,7 @@ def main():
             atomic(study/'planning.json', projection())
         for name, sha in manifest['sources'].items():
             assert digest(study/(name+'.py'))==sha, 'Saved source snapshot changed'
+        pointer.write_text(str(study)+'\n')
         ledger_path = study/'incremental_budget.json'
         ledger = read(ledger_path) if ledger_path.exists() else dict(charged_hours=0., invocations=[])
         pending = validate_ledger(ledger)
@@ -218,6 +229,8 @@ def main():
             exec(compile(sources['runtime'], str(HERE/'runtime.py'), 'exec'), ns)
             assert ns['PYTHON'].is_file() and ns['pinned_cuda_ready'](), 'Use timing environment; no installation performed'
             assert (root/'cuda/nvvm/libdevice/libdevice.10.bc').is_file()
+            assert list((root/'tensorflow_datasets/cifar100').glob('**/dataset_info.json')), \
+                'Prepared CIFAR-100 cache missing; use the same work root as the successful timing run'
             revision = subprocess.check_output(['git', '-C', str(ns['REPO']), 'rev-parse', 'HEAD'], text=True, timeout=15).strip()
             assert revision==REVISION
             assert not subprocess.check_output(['git', '-C', str(ns['REPO']), 'status', '--porcelain',
@@ -243,6 +256,9 @@ def main():
             ledger['charged_hours'] += receipt['elapsed_hours']; atomic(ledger_path, ledger)
             atomic(study/'status.json', dict(status=status, charged_hours=ledger['charged_hours'],
                 note='Incremental active invocation time only; reconcile once with team ledger. Idle VM time excluded.'))
+            progress = read(study/'progress.json') if (study/'progress.json').exists() else {}
+            progress.update(status=status, charged_hours=ledger['charged_hours'])
+            atomic(study/'progress.json', progress)
             export(study)
 
 

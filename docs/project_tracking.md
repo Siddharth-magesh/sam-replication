@@ -123,7 +123,7 @@ One full comparison (SAM, SGD-200, SGD-400) is roughly 12 to 16 A100-hours. The 
 | 18 | CIFAR-100 intermediate T4 comparison | Code lead | Nov 18 | Notebook 07: 5k train, ten epochs, three-epoch lambda trials, warm-up/stability timing, validation sensitivity and epoch optimizer checkpoints. User T4 run completed ten epochs and all metrics (20261119_052637_f9ddec); serialization passed, interrupted-training recovery (to verify). |
 
 | 19 | A100 one-epoch SGD/SAM/IGR timing before full experiment | Code lead | Nov 18 | Notebook 08 and experiments/cifar100_resnet18_a100_one_epoch_timing Python CLI prepared: 45k train / 5k validation, batch 128, one epoch per method after discarded warm-up, independent processes, real timing/optional checkpoint and budget projection only. Teammate supplied completed A100 timing (20261119_153717_b8692b): approximately 17.47/37.36/39.53 training seconds for SGD/SAM/IGR. Full-study projection approximately 15.02 h including tuning/reserve/allowance; not measured full-run time. |
-| 20 | Full CIFAR-100 ResNet-18 SGD/SAM/IGR study | Code lead | Nov 19 | Prepared opt-in A100 runner: 3 validation lambda trials and 9 final 100-epoch runs, atomic checkpoints/resume, cumulative budget receipts, stronger final probes, per-seed/mean/std/paired reports. Local syntax/source/control-flow/report checks passed; full GPU run and GPU interruption recovery (to verify). |
+| 20 | Full CIFAR-100 ResNet-18 SGD/SAM/IGR study | Code lead | Nov 19 | Prepared opt-in A100 runner: 3 validation lambda trials and 9 final 100-epoch runs, atomic checkpoints/resume, cumulative budget receipts, stronger final probes, per-seed/mean/std/paired reports. JS2 paths/environment reviewed; added latest-study resume, duplicate guard and monitor instructions. Local syntax/source/control-flow/report checks passed; full GPU run and GPU interruption recovery (to verify). |
 
 Owners marked TBD should be filled in at the next meeting. Each task should have exactly one owner, even if several people help.
 
@@ -142,6 +142,8 @@ Owners marked TBD should be filled in at the next meeting. Each task should have
 The report is 4 pages excluding references and appendix, in a standard conference template. The appendix must contain extra plots, hyperparameters, failed attempts, a link to our code, a short statement of who did what, and a statement of how AI tools were used. We are allowed to use AI tools to understand the paper, debug code, and polish writing, but not to generate the analysis or conclusions, and every member must be able to explain the report if the TAs ask. To make the appendix statement easy, **each member should keep a running note of where they used AI help** (which task, which tool), added to the bottom of this file. Report failed runs and changed plans honestly, and do not adjust the experiment after seeing results to make it say something. Check-in and report-review milestones are not graded separately, but groups that skip them rarely do well, so everyone should come prepared.
 
 ## 12. Changelog
+
+- **2026-11-19**: Reviewed full study against successful timing code and JS2 paths. Added explicit latest-study resume, duplicate-study prevention, cache precheck and monitor/final progress instructions; scientific updates unchanged. Local source/CLI/selection/accounting checks passed; full GPU execution remains (to verify).
 
 - **2026-11-19**: Prepared complete ResNet-18/CIFAR-100 A100 study and run instructions, preserving tested scientific training functions. Added checkpoint recovery, frozen validation selection, incremental budget cap/receipts, stronger final evaluation and descriptive multi-seed reporting. No GPU launch; full execution remains to verify.
 
@@ -204,6 +206,8 @@ The report is 4 pages excluding references and appendix, in a standard conferenc
 - **2026-10-20**: Tracker created. Environment working on Colab T4, SAM and SGD smoke tests passed, code findings documented, shared notebook prepared. A100 setup and first real reproduction not yet started.
 
 ## 13. AI-usage log (for the appendix statement)
+
+- **2026-11-19**: Codex audited the teammate's full-study launcher, compared scientific ASTs to the measured timing implementation, checked host-side selection/recovery guards and refined JS2 operating instructions. No training, speedup claim or new research result.
 
 - **2026-11-19**: Codex implemented the user-requested full A100 study using the tested timing worker, checked source identity/Python syntax and exercised checkpoint recovery, selection, budget reconciliation and reporting with local stand-ins. No training or scientific hypothesis conclusions generated.
 

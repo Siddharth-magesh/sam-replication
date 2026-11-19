@@ -28,6 +28,17 @@ All three development trials and all nine final training runs finish before test
 
 ## Launch on the course machine
 
+Reviewed against the successful `20261119_153717_b8692b` timing setup on November 19. No performance flags or scientific functions were changed in this review. This implementation is already the fast measured ResNet configuration, not the slower WRN reproduction. Keep sequential execution: spare VRAM does not provide independent GPU compute. The added operational checks do not certify full training or stronger evaluation; those remain **(to verify)**.
+
+From **local Ubuntu/WSL** (not the remote Ubuntu terminal), if the instance is currently shelved:
+
+```bash
+js2 start csci567-sam
+js2 ssh csci567-sam
+```
+
+Only start this instance when ready to run. A100 allocation rate is 64 SUs/hour in the course guide: the 15.02-hour estimate is approximately 962 SUs; a 20-hour run could use 1,280 SUs, plus idle/startup time. Check the actual remaining allocation before unshelving. These are planning figures, not a cloud billing query.
+
 First confirm the machine is idle and the team's actual remaining GPU allocation covers this study. The prior declared 26.0812 hours was not a live balance. Account for the timing invocation and other usage once. The study journal records incremental invocation time; it does not overwrite the old team ledger and excludes VM idle time.
 
 ```bash
@@ -53,6 +64,26 @@ Use the same `--reuse-env` path that passed the timing run. If timing created it
 
 Detach with Ctrl-b then d; reattach with `tmux attach -t igr-full`. The launcher prints `STUDY` immediately and appends epoch progress to each job's `train.log`. Default cumulative incremental cap is 20 hours, including failed invocations; it is frozen in the manifest. It is a ceiling, not a promise to use 20 hours. The supplied epoch timings imply approximately 8.13 hours for final training, 3.39 for tuning, plus an unmeasured one-hour evaluation reserve and 20% allowance: approximately 15.02 hours. Stronger evaluation has not been timed; it can exceed that reserve. No new A100 training has been executed during implementation.
 
+The first jobs are IGR tuning trials, not SGD. It is normal to see `tune_lambda_0.0`, `tune_lambda_0.01`, then `tune_lambda_0.1`. After selection, nine final training runs execute sequentially, then nine evaluations. Expect epoch lines after the initial compile; the launcher prints heartbeat messages while subprocesses work.
+
+The current study path is also saved to `/workspace/sam_igr_a100_timing/latest_full_study.txt`. A normal relaunch refuses to create a duplicate while that recorded study is unfinished.
+
+In a **second SSH terminal**, monitor without launching another job:
+
+```bash
+STUDY=$(cat /workspace/sam_igr_a100_timing/latest_full_study.txt)
+cat "$STUDY/progress.json"
+find "$STUDY" -name history.json -exec tail -n 18 {} \;
+```
+
+`progress.json` appears when the first job starts. To follow the first job live:
+
+```bash
+tail -n 30 -F "$STUDY/tune_lambda_0.0/train.log"
+```
+
+Use the job/phase listed in `progress.json` for later logs (`train.log` or `evaluate.log`). Avoid pulling/changing scripts after creating the study; source fingerprints intentionally freeze resume compatibility.
+
 The launcher shares locks with the timing and earlier WRN launcher and refuses an already busy GPU. Notebook jobs do not honor these locks, so do not start other GPU work concurrently. GNU `timeout` enforces the remaining invocation allowance even if the parent process dies. Interrupt with Ctrl-C for a graceful stop. Do not delete partial evidence.
 
 ## Resume and budget recovery
@@ -68,6 +99,15 @@ python3 -u -B experiments/cifar100_resnet18_sam_igr_full/run.py \
 ```
 
 Completed trials/runs are reused and incomplete epochs replayed. Evaluation resumes by clean/sensitivity/PGD/sharpness unit; an interrupted unit restarts, without retraining. If the cumulative cap is exhausted, preserve the incomplete study and report its status; changing the frozen cap requires a separately documented protocol/budget decision rather than silently resetting the journal.
+
+For a study created by the reviewed launcher, the simpler resume command below uses its saved source snapshot, protecting against later repository updates. Run inside tmux after the previous process has exited:
+
+```bash
+STUDY=$(cat /workspace/sam_igr_a100_timing/latest_full_study.txt)
+python3 -u -B "$STUDY/run.py" --execute --budget-hours 20 --resume-latest
+```
+
+The 20-hour cap is cumulative, not reset on resume. For older studies without the pointer, use the explicit `--study-dir` command above and the original saved launcher version. Do not repeat a fresh launch after a timeout.
 
 An uncatchable host crash leaves a reservation of the remaining allowance. Wait for all bounded child processes to stop and independently verify the invocation's actual active hours from external timestamps/logs. Settle that receipt exactly once, with **verified actual hours**, before the normal resume command:
 
@@ -99,6 +139,23 @@ python3 -B experiments/cifar100_resnet18_sam_igr_full/report.py \
 ```
 
 The weight proxy is a lower bound from finite optimization, with unregularized inference CE, fixed BN and all trainable parameters including BN affine terms. It includes the unperturbed candidate so the reported increase is nonnegative. Its absolute radius is sensitive to parameterization; trajectories and weight norms are retained. PGD counts an example robust only if it is clean-correct and correct at every visited iterate in every restart; this is not a robustness certificate or a complete masking check.
+
+Download from **local WSL**, using the current instance IP and replacing `STUDY_ID` with the printed ID:
+
+```bash
+mkdir -p /mnt/d/ML_Research/sam-replication/experimental_results/igr_full
+scp ubuntu@149.165.159.148:/workspace/sam_igr_a100_timing/full_runs/STUDY_ID_evidence.zip \
+  /mnt/d/ML_Research/sam-replication/experimental_results/igr_full/
+```
+
+After verifying the download and confirming no GPU job is active, from local WSL:
+
+```bash
+js2 stop csci567-sam
+js2 status csci567-sam
+```
+
+Wait for `SHELVED_OFFLOADED`. Do not delete the persistent study/checkpoints. Failure also leaves the VM active; collect evidence and shelve it if not promptly resuming.
 
 This experiment tests whether IGR provides an alternative route to generalization in this setup. Similar IGR/SAM accuracies do not establish equivalence without a predeclared margin and adequate precision, and do not establish that input stability causes SAM's own benefit. If SAM fails to improve on SGD here, there is no demonstrated SAM gain in this setup for IGR to reproduce. The T4 intermediate's negative SAM result must remain reported alongside any later positive results. The team should write its competing predictions before looking at these new test results and report inconclusive/negative outcomes honestly.
 
