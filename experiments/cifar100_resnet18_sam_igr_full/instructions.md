@@ -88,6 +88,18 @@ The launcher shares locks with the timing and earlier WRN launcher and refuses a
 
 ## Numerical failure on November 19: diagnostic first
 
+Latest evidence: both epoch-75 replays were finite, but validation accuracy was 2.5% (legacy) / 1% (centered). This did not reproduce the crash or establish a repair. The next targeted check is the BN audit below. It compares batch/running statistics on the same 1,280 training images, recalibrates BN using 100 training batches with fixed weights, then evaluates the 5,000 validation images. No official test images, optimizer updates or saved checkpoint changes. Five-minute cap, charged to the existing ledger. This is diagnostic only; calibration is not adopted as a training protocol.
+
+```bash
+cd /workspace/sam-replication
+git pull --ff-only origin repro
+python3 -u -B experiments/cifar100_resnet18_sam_igr_full/diagnose.py \
+  --study-dir /workspace/sam_igr_a100_timing/full_runs/20261119_200309_788f36 \
+  --bn-audit --execute
+```
+
+Send the printed `training_subset`, `validation_before`, and `validation_after` values. The full record is `DIAGNOSTIC RESULTS/legacy/bn_audit.json`. Runtime behavior remains **(to verify)**; do not launch full training from this diagnostic.
+
 Study `20261119_200309_788f36` stopped in lambda 0.01 epoch 75 with a non-finite training metric; epoch 74 was saved. Lambda 0 finished at 76.94% validation accuracy. No final experiments ran. Do not resume this numerical failure unchanged or remove the finite checks.
 
 The diagnostic replays epoch 75 from the same saved optimizer/BN checkpoint twice: legacy Flax BN and an opt-in centered-variance BN candidate. The latter computes mean squared centered activations instead of subtracting two large second moments. It preserves BN names, initialization, momentum and epsilon; negative saved running variances are reported, never silently clipped. This is a candidate numerical correction, **not a confirmed root cause or verified full-run repair (to verify)**. The IGR train/inference BN mismatch also remains a possible source of poor validation accuracy.

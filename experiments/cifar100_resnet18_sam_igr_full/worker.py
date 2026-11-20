@@ -324,9 +324,58 @@ def bn_report(state):
     return values
 
 
-def diagnose():
+@jax.jit
+def bn_forward(model, state, x, y):
+    with nn.stateful(state) as updated:
+        logits = model(x, train=True)
+    return updated, jnp.sum(jnp.argmax(logits, axis=1) == y), jnp.mean(losses(logits, y))
+
+
+def audit_bn():
     opt, state, completed, _ = restore()
-    assert completed == C['diagnostic_completed_epoch'] < C['epochs']
+    original = state_hash(opt.target, state)
+    optimizer_hash = hashlib.sha256(serialization.to_bytes(opt)).hexdigest()
+    result = dict(completed_epoch=completed, bn_before=bn_report(state),
+                  note='Diagnostic only: training data for mode comparison/calibration; validation only for scoring; no weight updates.')
+    result['validation_before'] = evaluate(opt.target, state, images, labels, vi)
+    save('bn_audit.json', result)
+    correct_train = correct_eval = ce_train = ce_eval = 0.
+    # Identical training images in both modes. Discard each train-mode state update.
+    for i, (x, y) in enumerate(batches(0, C['seed'])):
+        if i == 10: break
+        check_time()
+        unused, a, b = ready(bn_forward(opt.target, state, x, y))
+        c, d = ready(clean_batch(opt.target, state, x, y, np.ones(B, np.float32)))
+        finite((unused, a, b, c, d))
+        correct_train += float(a); ce_train += float(b)*B
+        correct_eval += float(c); ce_eval += float(d)
+    result['training_subset'] = dict(n=10*B,
+        batch_statistics_accuracy=100*correct_train/(10*B),
+        running_statistics_accuracy=100*correct_eval/(10*B),
+        batch_statistics_ce=ce_train/(10*B), running_statistics_ce=ce_eval/(10*B))
+    assert state_hash(opt.target, state) == original, 'Mode comparison mutated original state'
+    calibrated = state
+    for i, (x, y) in enumerate(batches(0, C['seed'])):
+        if i == 100: break
+        check_time()
+        calibrated, a, b = ready(bn_forward(opt.target, calibrated, x, y))
+        finite((calibrated, a, b))
+        if i % 25 == 0: print('BN calibration batch', i+1, '/100', flush=True)
+    result['calibration_training_batches'] = 100
+    result['validation_after'] = evaluate(opt.target, calibrated, images, labels, vi)
+    result['bn_after'] = bn_report(calibrated)
+    assert state_hash(opt.target, state) == original, 'Original state changed'
+    assert hashlib.sha256(serialization.to_bytes(opt)).hexdigest() == optimizer_hash, 'Optimizer changed'
+    result.update(status='complete', weights_unchanged=True, original_state_unchanged=True)
+    save('bn_audit.json', result)
+
+
+def diagnose():
+    if C.get('diagnostic_mode') == 'bn_audit':
+        audit_bn()
+        return
+    opt, state, completed, _ = restore()
+    assert 0 <= C['diagnostic_completed_epoch']-completed <= 1 and completed < C['epochs']
     before = dict(completed_epoch=completed, bn=bn_report(state),
                   state_sha256=state_hash(opt.target, state))
     save('diagnostic_before.json', before)

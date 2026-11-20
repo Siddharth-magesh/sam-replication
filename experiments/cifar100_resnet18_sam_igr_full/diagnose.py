@@ -22,9 +22,13 @@ def main():
     parser.add_argument('--study-dir', type=Path, required=True)
     parser.add_argument('--job', default='tune_lambda_0.01')
     parser.add_argument('--execute', action='store_true')
+    parser.add_argument('--bn-audit', action='store_true', help='Training-only BN recalibration; no optimizer updates; five-minute cap')
     args = parser.parse_args()
     assert Path(args.job).name == args.job and args.job not in ('.', '..')
     if not args.execute:
+        if args.bn_audit:
+            print('PLAN ONLY: compare BN modes and calibrate on 100 training batches; five-minute cap; no weight updates.')
+            return
         print('PLAN ONLY: replay one checkpoint epoch twice, legacy then centered BN.')
         print('15-minute total ceiling, charged to the existing study ledger. No full training.')
         return
@@ -40,7 +44,7 @@ def main():
     assert cfg['method'] == 'IGR' and cfg['stage'] == 'tune'
     assert read(source/'train_status.json')['status'] == 'failed'
     history = read(source/'history.json')
-    assert history and history[-1]['epoch'] < cfg['epochs']
+    assert history and history[-1]['epoch'] <= cfg['epochs']
     checkpoint = source/'latest.msgpack'
     checkpoint_hash = digest(checkpoint)
     import fcntl
@@ -54,7 +58,7 @@ def main():
         ledger_path = study/'incremental_budget.json'
         ledger = read(ledger_path)
         assert not validate_ledger(ledger), 'Unsettled reservation: use existing recovery instructions'
-        allowance = min(.25, manifest['budget_hours']-ledger['charged_hours'])
+        allowance = min(5/60 if args.bn_audit else .25, manifest['budget_hours']-ledger['charged_hours'])
         assert allowance > 1/60, 'Insufficient remaining budget'
         out = study/'diagnostics'/(datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')+'_'+uuid.uuid4().hex[:6])
         out.mkdir(parents=True)
@@ -78,19 +82,24 @@ def main():
             exec(compile(runtime, str(out/'runtime.py'), 'exec'), ns)
             ns['command']([ns['PYTHON'], '-c', ns['GPU_CHECK']], out/'runtime_check.log',
                           ns['environment'](), deadline)
-            for variant in ('legacy', 'centered'):
+            for variant in (('legacy',) if args.bn_audit else ('legacy', 'centered')):
                 target = out/variant; target.mkdir()
                 config = dict(cfg, output=str(target), bn_implementation=variant,
+                    diagnostic_mode='bn_audit' if args.bn_audit else 'replay',
                     diagnostic_checkpoint=str(checkpoint), diagnostic_completed_epoch=history[-1]['epoch'])
                 atomic(target/'config.json', config)
                 # Expected numerical failure of legacy is evidence, not a reason to skip the candidate.
                 code = ns['command']([ns['PYTHON'], '-u', out/'worker.py', target/'config.json', 'diagnose'],
                     target/'diagnose.log', ns['environment'](), deadline, check=False)
                 outcomes[variant] = dict(exit_code=code)
-                for name in ('diagnostic_result', 'numerical_failure', 'diagnose_status'):
+                for name in ('diagnostic_result', 'bn_audit', 'numerical_failure', 'diagnose_status'):
                     if (target/(name+'.json')).exists(): outcomes[variant][name] = read(target/(name+'.json'))
                 atomic(out/'comparison.json', outcomes)
                 assert digest(checkpoint) == checkpoint_hash, 'Source checkpoint changed'
+            if args.bn_audit:
+                assert outcomes['legacy']['exit_code'] == 0 and outcomes['legacy'].get('bn_audit', {}).get('status') == 'complete', 'BN audit failed; inspect log'
+                status = 'complete'
+                return
             before = [read(out/v/'diagnostic_before.json') for v in ('legacy', 'centered')
                       if (out/v/'diagnostic_before.json').exists()]
             if len(before) == 2:
