@@ -21,7 +21,7 @@ REVISION = '7f34662deec03341b78cccd4ce18ec2f7900429b'
 METHODS = ('SGD', 'SAM', 'IGR')
 SEEDS = (0, 1, 2)
 LAMBDAS = (0., .01, .1)
-PROTOCOL = 'cifar100_resnet18_sam_igr_full_v2_bn_calibration'
+PROTOCOL = 'cifar100_resnet18_sam_igr_full_v3_centered_bn'
 
 
 def read(path): return json.loads(Path(path).read_text())
@@ -51,7 +51,7 @@ def projection():
 
 
 def config(root, output, gpu, method, seed, lam, stage, job):
-    return dict(protocol=PROTOCOL, epochs=100, train_per_class=450, bn_calibration_batches=100,
+    return dict(protocol=PROTOCOL, epochs=100, train_per_class=450, bn_calibration_batches=100, bn_implementation='centered',
         batch_size=128, seed=seed, split_seed=2026, lr=.1, momentum=.9, weight_decay=.0005,
         clip=5., rho=.05, igr_lambda=lam, method=method, stage=stage, job=job,
         worker_seconds=24*3600, repo=str(root/'work/sam'), output=str(output),
@@ -66,15 +66,19 @@ def jobs():
 
 def select_lambda(study):
     tuning = []
+    rejected = []
     for job, method, seed, lam, stage in jobs():
+        if (study/job/'tuning_rejected.json').exists():
+            rejected.append(read(study/job/'tuning_rejected.json'))
+            continue
         row = read(study/job/'train_result.json')
         assert row['status']=='complete' and row['epochs']==100 and row['seed']==42
         assert row['method']=='IGR' and row['igr_lambda']==lam
         tuning.append(dict(lam=lam, validation_accuracy=row['validation']['accuracy'],
                            validation_ce=row['validation']['ce']))
-    assert all(math.isfinite(r['validation_accuracy']) for r in tuning)
+    assert tuning and all(math.isfinite(r['validation_accuracy']) for r in tuning), 'No completed finite tuning trials'
     selected = sorted(tuning, key=lambda r: (-r['validation_accuracy'], r['lam']))[0]['lam']
-    decision = dict(selected_lambda=selected, tuning=tuning, test_used=False,
+    decision = dict(selected_lambda=selected, tuning=tuning, rejected=rejected, test_used=False,
                     rule='Highest final-epoch validation accuracy; ties smallest lambda')
     path = study/'lambda_selection.json'
     if path.exists(): assert read(path)==decision, 'Frozen lambda selection differs'
@@ -88,6 +92,9 @@ def launch(ns, study, root, gpu, job, method, seed, lam, stage, phase, deadline)
     path = out/'config.json'
     if path.exists(): assert read(path)==cfg, 'Job configuration changed'
     else: atomic(path, cfg)
+    if stage == 'tune' and (out/'tuning_rejected.json').exists():
+        print('Preserving rejected numerical tuning trial', job, flush=True)
+        return
     marker = out/('train_result.json' if phase=='train' else 'metrics.json')
     if marker.exists():
         row = read(marker)
@@ -272,7 +279,18 @@ def main():
                 '--untracked-files=no'], text=True, timeout=15).strip(), 'Runtime tracked source modified'
             ns['command']([ns['PYTHON'], '-c', ns['GPU_CHECK']], study/'runtime_check.log', ns['environment'](), deadline)
             for job, method, seed, lam, stage in jobs():
-                launch(ns, study, root, gpu, job, method, seed, lam, stage, 'train', deadline)
+                try:
+                    launch(ns, study, root, gpu, job, method, seed, lam, stage, 'train', deadline)
+                except RuntimeError:
+                    failed = study/job
+                    marker = failed/'train_status.json'
+                    if not (marker.exists() and read(marker).get('error') == 'Non-finite value'
+                            and (failed/'numerical_failure.json').exists()):
+                        raise
+                    atomic(failed/'tuning_rejected.json', dict(job=job, lam=lam,
+                        status='rejected_nonfinite', evidence='numerical_failure.json',
+                        note='Failed hyperparameter trial retained; excluded from validation selection.'))
+                    print('Numerically unstable tuning trial retained and rejected:', job, flush=True)
             selected = select_lambda(study)
             final = [('final_'+m+'_seed'+str(s), m, s, selected if m=='IGR' else 0., 'final')
                      for s in SEEDS for m in METHODS]

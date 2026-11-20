@@ -1,5 +1,11 @@
 # Full A100 ResNet-18 / CIFAR-100 study
 
+## Active v3 correction
+
+V2 stopped at lambda .01 epoch 75 batch 238: clean CE/gradient were NaN while the input penalty was finite; BN states became NaN downstream. V3 uses centered-variance BN for all methods, retaining evaluation calibration and the same hyperparameters. This targets the observed training-path failure; exact floating-point cause remains unproven. A numerically failed tuning trial is retained as `tuning_rejected.json` and excluded from selection; other errors still stop execution, as does any non-finite final run. If lambda zero wins, final IGR is the zero-penalty control and must be reported as such.
+
+Restart v3 from `/workspace/sam_igr_a100_timing/full_runs/20261120_013253_ed8463` using `--restart-from` (instead of the older path below), carrying its complete ledger. Local selection/syntax checks passed and centered BN previously passed the A100 checkpoint replay; long-run behavior remains (to verify). A persistent tmux launcher log is used so errors remain readable even after the session exits.
+
 ## Current launch: revised BN evaluation protocol
 
 The BN audit restored validation from 1.64% to 67.36% without changing weights. Protocol v2 now recalibrates an evaluation-only BN copy on 100 fixed training batches before every validation for **all** methods. Raw validation is also logged. Training resumes from the original optimizer/BN state; final evaluation loads a separately saved calibrated BN state. The centered-BN candidate is not adopted. Zero-lambda IGR bypasses the penalty, and gradient norms use scaled arithmetic. This addresses confirmed evaluation behavior and two numerical risks; the original NaN cause and full-run stability remain **(to verify)**.

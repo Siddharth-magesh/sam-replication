@@ -182,7 +182,8 @@ def max_abs(tree):
 def make_step(method):
     @jax.jit
     def step(opt,state,x,y,lr,lam):
-        revised = C.get('protocol') == 'cifar100_resnet18_sam_igr_full_v2_bn_calibration'
+        revised = C.get('protocol') in ('cifar100_resnet18_sam_igr_full_v2_bn_calibration',
+                                      'cifar100_resnet18_sam_igr_full_v3_centered_bn')
         if method=='IGR' and not (revised and C.get('igr_lambda', 1.) == 0.):
             (value,(ns,ce,p)),g=jax.value_and_grad(igr_loss,has_aux=True)(opt.target,state,x,y,lam)
         else:

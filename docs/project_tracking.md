@@ -149,6 +149,8 @@ The report is 4 pages excluding references and appendix, in a standard conferenc
 
 ## 12. Changelog
 
+- **2026-11-20**: Inspected actual v2 epoch-75 NaN; enabled centered BN consistently in v3 and retained/rejected numerically failed tuning candidates. User authorized SSH launch in tmux; prior evidence/budget preserved.
+
 - **2026-11-20**: Implemented evaluation-only BN calibration across all arms, zero-lambda bypass, scaled gradient norms and explicit budget-preserving v2 restart. Failed v1 evidence preserved.
 
 - **2026-11-20**: Added bounded fixed-weight BN mode/calibration audit after both replays remained near chance; preserved all evidence and existing budget accounting.
@@ -218,6 +220,8 @@ The report is 4 pages excluding references and appendix, in a standard conferenc
 - **2026-10-20**: Tracker created. Environment working on Colab T4, SAM and SGD smoke tests passed, code findings documented, shared notebook prepared. A100 setup and first real reproduction not yet started.
 
 ## 13. AI-usage log (for the appendix statement)
+
+- **2026-11-20**: Codex used authorized csci567-sam SSH to inspect training failure, prepared v3 and checked failed-candidate selection locally. Long-run stability (to verify).
 
 - **2026-11-20**: Codex used supplied BN audit evidence to implement and locally check revised evaluation/checkpoint/budget paths. No new GPU run; numerical stability and full outcome (to verify).
 
