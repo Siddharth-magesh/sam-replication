@@ -129,6 +129,8 @@ Owners marked TBD should be filled in at the next meeting. Each task should have
 
 ## 10. Risks and open questions
 
+Task 20 live status: authorized v3 full study launched on csci567-sam in tmux `igr-full-v3`, run `20261120_043937_4863bf`, code f494329. Persistent launcher log available; prior 2.0341989423 hours carried forward. Full completion remains (to verify).
+
 Task 20 update (November 20): BN recalibration recovered validation 1.64% to 67.36% at unchanged weights. V2 full runner prepared with consistent evaluation calibration, fresh runs, separate training/evaluation states and preserved cumulative budget. Full execution and original NaN cause (to verify).
 
 Task 20 update: epoch-75 replay completed for both BN implementations, with 2.5%/1% validation accuracy. Repair not established. Five-minute training-only BN calibration audit prepared; GPU outcome (to verify).

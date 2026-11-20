@@ -2,6 +2,8 @@
 
 ## Active v3 correction
 
+Launched on csci567-sam: `/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf`, tmux `igr-full-v3`. Monitor with `tail -n 30 -F /workspace/sam_igr_a100_timing/full_v3_launcher.log` or `tmux attach -t igr-full-v3`. Launcher log survives tmux exits; do not start a duplicate. Full completion remains (to verify).
+
 V2 stopped at lambda .01 epoch 75 batch 238: clean CE/gradient were NaN while the input penalty was finite; BN states became NaN downstream. V3 uses centered-variance BN for all methods, retaining evaluation calibration and the same hyperparameters. This targets the observed training-path failure; exact floating-point cause remains unproven. A numerically failed tuning trial is retained as `tuning_rejected.json` and excluded from selection; other errors still stop execution, as does any non-finite final run. If lambda zero wins, final IGR is the zero-penalty control and must be reported as such.
 
 Restart v3 from `/workspace/sam_igr_a100_timing/full_runs/20261120_013253_ed8463` using `--restart-from` (instead of the older path below), carrying its complete ledger. Local selection/syntax checks passed and centered BN previously passed the A100 checkpoint replay; long-run behavior remains (to verify). A persistent tmux launcher log is used so errors remain readable even after the session exits.
