@@ -129,6 +129,8 @@ Owners marked TBD should be filled in at the next meeting. Each task should have
 
 ## 10. Risks and open questions
 
+Task 20 update (November 20): BN recalibration recovered validation 1.64% to 67.36% at unchanged weights. V2 full runner prepared with consistent evaluation calibration, fresh runs, separate training/evaluation states and preserved cumulative budget. Full execution and original NaN cause (to verify).
+
 Task 20 update: epoch-75 replay completed for both BN implementations, with 2.5%/1% validation accuracy. Repair not established. Five-minute training-only BN calibration audit prepared; GPU outcome (to verify).
 
 November 19 update to task 20: study 20261119_200309_788f36 failed during lambda 0.01 epoch 75; checkpoint at epoch 74 retained, 1.1624682491 active hours charged, final runs not started. Centered-variance BN candidate and bounded, budgeted same-checkpoint comparison prepared. Root cause, GPU compatibility and repair effectiveness **(to verify)**; full study remains blocked on numerical diagnosis.
@@ -146,6 +148,8 @@ November 19 update to task 20: study 20261119_200309_788f36 failed during lambda
 The report is 4 pages excluding references and appendix, in a standard conference template. The appendix must contain extra plots, hyperparameters, failed attempts, a link to our code, a short statement of who did what, and a statement of how AI tools were used. We are allowed to use AI tools to understand the paper, debug code, and polish writing, but not to generate the analysis or conclusions, and every member must be able to explain the report if the TAs ask. To make the appendix statement easy, **each member should keep a running note of where they used AI help** (which task, which tool), added to the bottom of this file. Report failed runs and changed plans honestly, and do not adjust the experiment after seeing results to make it say something. Check-in and report-review milestones are not graded separately, but groups that skip them rarely do well, so everyone should come prepared.
 
 ## 12. Changelog
+
+- **2026-11-20**: Implemented evaluation-only BN calibration across all arms, zero-lambda bypass, scaled gradient norms and explicit budget-preserving v2 restart. Failed v1 evidence preserved.
 
 - **2026-11-20**: Added bounded fixed-weight BN mode/calibration audit after both replays remained near chance; preserved all evidence and existing budget accounting.
 
@@ -214,6 +218,8 @@ The report is 4 pages excluding references and appendix, in a standard conferenc
 - **2026-10-20**: Tracker created. Environment working on Colab T4, SAM and SGD smoke tests passed, code findings documented, shared notebook prepared. A100 setup and first real reproduction not yet started.
 
 ## 13. AI-usage log (for the appendix statement)
+
+- **2026-11-20**: Codex used supplied BN audit evidence to implement and locally check revised evaluation/checkpoint/budget paths. No new GPU run; numerical stability and full outcome (to verify).
 
 - **2026-11-20**: Codex interpreted supplied replay evidence and implemented a training-only BN audit with unchanged-weight checks. Local syntax/dry-run/source checks passed; numerical GPU behavior (to verify).
 

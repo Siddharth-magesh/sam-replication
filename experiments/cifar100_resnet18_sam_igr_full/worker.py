@@ -170,20 +170,31 @@ def igr_loss(model,state,x,y,lam):
     p=penalty(model,state,x,y)
     return base+lam*p,(ns,ce,p)
 
+
+def scaled_norm(tree):
+    maximum = jnp.maximum(max_abs(tree), jnp.float32(1e-30))
+    return maximum*jnp.sqrt(sum(jnp.sum(jnp.square(x/maximum)) for x in jax.tree_leaves(tree)))
+
+
+def max_abs(tree):
+    return jnp.max(jnp.stack([jnp.max(jnp.abs(x)) for x in jax.tree_leaves(tree)]))
+
 def make_step(method):
     @jax.jit
     def step(opt,state,x,y,lr,lam):
-        if method=='IGR':
+        revised = C.get('protocol') == 'cifar100_resnet18_sam_igr_full_v2_bn_calibration'
+        if method=='IGR' and not (revised and C.get('igr_lambda', 1.) == 0.):
             (value,(ns,ce,p)),g=jax.value_and_grad(igr_loss,has_aux=True)(opt.target,state,x,y,lam)
         else:
             (value,(ns,ce)),g=jax.value_and_grad(train_loss,has_aux=True)(opt.target,state,x,y)
             p=jnp.float32(0.)
             if method=='SAM':
-                delta=mul(g,C['rho']/jnp.maximum(l2(g),1e-12))
+                delta=mul(g,C['rho']/jnp.maximum(scaled_norm(g) if revised else l2(g),1e-12))
                 perturbed=add(opt.target,delta)
                 (_, _),g=jax.value_and_grad(train_loss,has_aux=True)(perturbed,state,x,y)
                 # Update ORIGINAL weights; keep clean first-pass BN statistics only.
-        gn=l2(g); g=mul(g,jnp.minimum(1.,C['clip']/jnp.maximum(gn,1e-12)))
+        gn=scaled_norm(g) if revised else l2(g)
+        g=mul(g,jnp.minimum(1.,C['clip']/jnp.maximum(gn,1e-12)))
         return opt.apply_gradient(g,learning_rate=lr),ns,dict(objective=value,clean_ce=ce,igr_penalty=p,gradient_norm=gn)
     return step
 STEPS_FN={m:make_step(m) for m in METHODS}
@@ -331,6 +342,21 @@ def bn_forward(model, state, x, y):
     return updated, jnp.sum(jnp.argmax(logits, axis=1) == y), jnp.mean(losses(logits, y))
 
 
+def calibrated_state(model, state):
+    """Evaluation-only EMA recalibration: fixed training subset, no optimizer step."""
+    original_hash = state_hash(model, state)
+    calibrated = state
+    count = C['bn_calibration_batches']
+    assert 0 < count <= STEPS
+    for i, (x, y) in enumerate(batches(0, C['seed'])):
+        if i == count: break
+        check_time()
+        calibrated, a, b = ready(bn_forward(model, calibrated, x, y))
+        finite((calibrated, a, b))
+    assert state_hash(model, state) == original_hash, 'Calibration mutated training state'
+    return calibrated
+
+
 def audit_bn():
     opt, state, completed, _ = restore()
     original = state_hash(opt.target, state)
@@ -411,7 +437,8 @@ def train_full():
     assert [row['epoch'] for row in history] == list(range(1, completed+1)), 'Checkpoint/history mismatch'
     save('history.json', history)
     if completed == C['epochs']:
-        validation = evaluate(opt.target, state, images, labels, vi)
+        eval_state = calibrated_state(opt.target, state)
+        validation = evaluate(opt.target, eval_state, images, labels, vi)
     for epoch in range(completed, C['epochs']):
         tick = time.perf_counter()
         ce_sum = p_sum = 0.
@@ -430,9 +457,17 @@ def train_full():
         train_s = time.perf_counter()-tick
         finite((opt, state))
         tick = time.perf_counter()
-        validation = evaluate(opt.target, state, images, labels, vi)
+        raw_validation = evaluate(opt.target, state, images, labels, vi)
+        raw_val_s = time.perf_counter()-tick
+        tick = time.perf_counter()
+        eval_state = calibrated_state(opt.target, state)
+        calibration_s = time.perf_counter()-tick
+        tick = time.perf_counter()
+        validation = evaluate(opt.target, eval_state, images, labels, vi)
         val_s = time.perf_counter()-tick
         row = dict(epoch=epoch+1, train_seconds=train_s, validation_seconds=val_s,
+                   calibration_seconds=calibration_s, raw_validation_seconds=raw_val_s,
+                   raw_validation_accuracy=raw_validation['accuracy'], raw_validation_ce=raw_validation['ce'],
                    train_clean_ce=ce_sum/STEPS, train_igr_penalty=p_sum/STEPS,
                    validation_accuracy=validation['accuracy'], validation_ce=validation['ce'])
         # History first: if interrupted before checkpoint replacement, truncate and replay.
@@ -450,7 +485,12 @@ def train_full():
         save('history.json', history)
         print(C['job'], json.dumps(row), flush=True)
     order = np.random.RandomState(C['seed']+1000).permutation(ti)
+    eval_path = OUT/'evaluation_state.msgpack'
+    eval_tmp = OUT/'evaluation_state.msgpack.tmp'
+    eval_tmp.write_bytes(serialization.to_bytes(eval_state)); eval_tmp.replace(eval_path)
     save('train_result.json', dict(status='complete', method=method, seed=C['seed'],
+         evaluation_state_sha256=hashlib.sha256(eval_path.read_bytes()).hexdigest(),
+         evaluation_model_bn_sha256=state_hash(opt.target, eval_state),
          epochs=C['epochs'], igr_lambda=C['igr_lambda'], validation=validation,
          initial_model_bn_sha256=initial, epoch0_order_sha256=hashlib.sha256(order.tobytes()).hexdigest(),
          final_model_bn_sha256=state_hash(opt.target, state), steps_per_epoch=STEPS,
@@ -465,6 +505,13 @@ def evaluate_final():
     opt, state, completed, _ = restore()
     assert completed == C['epochs']
     before = state_hash(opt.target, state)
+    assert before == trained['final_model_bn_sha256']
+    eval_path = OUT/'evaluation_state.msgpack'
+    assert hashlib.sha256(eval_path.read_bytes()).hexdigest() == trained['evaluation_state_sha256']
+    state = serialization.from_bytes(state, eval_path.read_bytes())
+    finite(state)
+    before = state_hash(opt.target, state)
+    assert before == trained['evaluation_model_bn_sha256']
     test = tfds.as_numpy(builder.as_dataset(split='test', batch_size=-1))
     xx, yy = test['image'], test['label'].astype(np.int32)
     assert len(yy) == 10000
@@ -502,7 +549,7 @@ def evaluate_final():
     sharp_path = OUT/'sharpness.json'
     if not sharp_path.exists():
         save('sharpness.json', sharpness(opt.target, state, xx, yy, probe, C['probe_seed']+C['seed']))
-    assert state_hash(opt.target, state) == before == trained['final_model_bn_sha256']
+    assert state_hash(opt.target, state) == before == trained['evaluation_model_bn_sha256']
     clean = json.loads(clean_path.read_text()); sens = json.loads(sensitivity_path.read_text())
     pgd = json.loads(pgd_path.read_text()); sharp = json.loads(sharp_path.read_text())
     result = dict(status='complete', method=C['method'], seed=C['seed'], igr_lambda=C['igr_lambda'],

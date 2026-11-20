@@ -1,5 +1,31 @@
 # Full A100 ResNet-18 / CIFAR-100 study
 
+## Current launch: revised BN evaluation protocol
+
+The BN audit restored validation from 1.64% to 67.36% without changing weights. Protocol v2 now recalibrates an evaluation-only BN copy on 100 fixed training batches before every validation for **all** methods. Raw validation is also logged. Training resumes from the original optimizer/BN state; final evaluation loads a separately saved calibrated BN state. The centered-BN candidate is not adopted. Zero-lambda IGR bypasses the penalty, and gradient norms use scaled arithmetic. This addresses confirmed evaluation behavior and two numerical risks; the original NaN cause and full-run stability remain **(to verify)**.
+
+Restart all tuning/final jobs consistently in a new folder; old evidence is preserved and its **current ledger, including diagnostics**, is carried into the same 20-hour cumulative cap. Revised planning estimate is about 16.22 hours of new work, including an extra unmeasured one-hour calibration reserve and allowance; this is not a measured runtime. Do not run the old study again after the restart, because that would change the ledger used for carry-forward.
+
+On the instance, preferably inside tmux so SSH disconnection does not end training:
+
+```bash
+cd /workspace/sam-replication
+git pull --ff-only origin repro
+tmux new -s igr-v2
+python3 -u -B experiments/cifar100_resnet18_sam_igr_full/run.py \
+  --execute --budget-hours 20 \
+  --restart-from /workspace/sam_igr_a100_timing/full_runs/20261119_200309_788f36
+```
+
+Detach with Ctrl-b then d. Results use `/workspace/sam_igr_a100_timing/full_runs/NEW_ID`; `latest_full_study.txt` records that path. After an interruption use the following **instead of repeating --restart-from**:
+
+```bash
+STUDY=$(cat /workspace/sam_igr_a100_timing/latest_full_study.txt)
+python3 -u -B "$STUDY/run.py" --execute --budget-hours 20 --resume-latest
+```
+
+Local syntax, calibration control flow, budget migration and checkpoint metadata checks passed; no new GPU run was launched. Historical diagnostic instructions below describe the investigation and are not prerequisites to repeat.
+
 This is the full SGD/SAM/IGR comparison requested after the T4 intermediate and A100 timing runs. It reuses the timing experiment's installed environment, cached CIFAR-100 and pinned original ResNet block. It does not install packages, modify the authors' implementation, launch a VM or stop it automatically. Run methods sequentially on the prepared `csci567-sam` A100 with at least 38,000 MiB. The default command only prints the plan.
 
 ## Frozen protocol

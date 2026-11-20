@@ -21,6 +21,7 @@ REVISION = '7f34662deec03341b78cccd4ce18ec2f7900429b'
 METHODS = ('SGD', 'SAM', 'IGR')
 SEEDS = (0, 1, 2)
 LAMBDAS = (0., .01, .1)
+PROTOCOL = 'cifar100_resnet18_sam_igr_full_v2_bn_calibration'
 
 
 def read(path): return json.loads(Path(path).read_text())
@@ -45,11 +46,12 @@ def projection():
     tuning = final['IGR']
     return dict(source='User-supplied A100 timing 20261119_153717_b8692b; estimates, not full-run measurements',
                 final_training_hours=final, tuning_hours=tuning, unmeasured_evaluation_reserve_hours=1.,
-                allowance=.2, total_estimated_hours=(sum(final.values())+tuning+1)*1.2)
+                unmeasured_bn_calibration_reserve_hours=1.,
+                allowance=.2, total_estimated_hours=(sum(final.values())+tuning+2)*1.2)
 
 
 def config(root, output, gpu, method, seed, lam, stage, job):
-    return dict(protocol='cifar100_resnet18_sam_igr_full_v1', epochs=100, train_per_class=450,
+    return dict(protocol=PROTOCOL, epochs=100, train_per_class=450, bn_calibration_batches=100,
         batch_size=128, seed=seed, split_seed=2026, lr=.1, momentum=.9, weight_decay=.0005,
         clip=5., rho=.05, igr_lambda=lam, method=method, stage=stage, job=job,
         worker_seconds=24*3600, repo=str(root/'work/sam'), output=str(output),
@@ -93,6 +95,7 @@ def launch(ns, study, root, gpu, job, method, seed, lam, stage, phase, deadline)
         if phase=='train':
             assert row['epochs']==100 and row['igr_lambda']==lam
             assert digest(out/'latest.msgpack')==row['checkpoint_sha256'], 'Checkpoint changed'
+            assert digest(out/'evaluation_state.msgpack')==row['evaluation_state_sha256'], 'Evaluation state changed'
         print('Reusing completed', job, phase, flush=True)
         return
     atomic(study/'progress.json', dict(job=job, phase=phase, status='running'))
@@ -135,6 +138,19 @@ def settle_receipt(ledger, hours):
     validate_ledger(ledger)
 
 
+def carried_ledger(parent, budget):
+    manifest = read(parent/'manifest.json')
+    ledger = read(parent/'incremental_budget.json')
+    assert not validate_ledger(ledger), 'Parent has an unsettled reservation'
+    assert manifest['budget_hours'] == budget, 'Keep the existing cumulative cap'
+    assert read(parent/'status.json')['status'] == 'failed', 'Restart only a stopped failed study'
+    hours = ledger['charged_hours']
+    result = dict(charged_hours=hours, invocations=[dict(status='manually_settled',
+        elapsed_hours=hours, source_study=str(parent), reason='Prior study and diagnostics carried forward once')])
+    validate_ledger(result)
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--execute', action='store_true')
@@ -142,12 +158,14 @@ def main():
     parser.add_argument('--reuse-env', type=Path, default=Path('/workspace/sam_paper_replication/envs/sam'))
     parser.add_argument('--study-dir', type=Path, help='Existing external study directory to resume')
     parser.add_argument('--resume-latest', action='store_true', help='Resume the study recorded by this launcher')
+    parser.add_argument('--restart-from', type=Path, help='Fresh revised protocol; preserve failed study and carry its full ledger')
     parser.add_argument('--budget-hours', type=float, default=20.,
                         help='Cumulative incremental study cap, including failed invocations; frozen at creation')
     parser.add_argument('--settle-interrupted-hours', type=float,
                         help='Replace a crashed invocation reservation with independently verified actual hours; no training')
     args = parser.parse_args()
     assert not (args.resume_latest and args.study_dir), 'Choose --resume-latest or --study-dir'
+    assert not (args.restart_from and (args.resume_latest or args.study_dir or args.settle_interrupted_hours is not None))
     assert math.isfinite(args.budget_hours) and args.budget_hours>0
     sources = {name: (HERE/(name+'.py')).read_text() for name in ('run', 'worker', 'runtime', 'report')}
     for name, source in sources.items(): ast.parse(source, filename=name, feature_version=(3, 8))
@@ -178,6 +196,15 @@ def main():
         assert 'A100' in gpu and float(gpu.rsplit(',', 1)[1])>=38000
         parent = root/'full_runs'; parent.mkdir(parents=True, exist_ok=True)
         pointer = root/'latest_full_study.txt'
+        inherited = None
+        lineage = None
+        if args.restart_from:
+            parent_study = args.restart_from.resolve()
+            assert parent_study.parent == parent and pointer.is_file()
+            assert Path(pointer.read_text().strip()).resolve() == parent_study, 'Use --resume-latest for an existing replacement'
+            inherited = carried_ledger(parent_study, args.budget_hours)
+            assert args.budget_hours-inherited['charged_hours'] >= projection()['total_estimated_hours'], 'Remaining budget below revised estimate'
+            lineage = dict(study=str(parent_study), ledger_sha256=digest(parent_study/'incremental_budget.json'))
         if args.resume_latest:
             assert pointer.is_file(), 'No latest study pointer; use --study-dir with the printed STUDY path'
             args.study_dir = Path(pointer.read_text().strip())
@@ -186,7 +213,7 @@ def main():
             assert study.parent==parent and study.is_dir(), 'Resume only an existing full_runs study'
         else:
             assert args.settle_interrupted_hours is None
-            if pointer.exists():
+            if pointer.exists() and not args.restart_from:
                 last = Path(pointer.read_text().strip())
                 assert (last/'status.json').is_file() and read(last/'status.json')['status']=='complete', \
                     'Previous study is unfinished. Use --resume-latest; do not start duplicate training.'
@@ -194,7 +221,11 @@ def main():
             study = parent/(datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')+'_'+uuid.uuid4().hex[:6])
             study.mkdir()
         print('STUDY:', study, flush=True)
-        manifest = dict(protocol='cifar100_resnet18_sam_igr_full_v1', root=str(root),
+        if (study/'manifest.json').exists():
+            lineage = read(study/'manifest.json').get('parent_study')
+        if lineage:
+            assert digest(Path(lineage['study'])/'incremental_budget.json') == lineage['ledger_sha256'], 'Parent ledger changed; reconcile before continuing'
+        manifest = dict(protocol=PROTOCOL, root=str(root), parent_study=lineage,
             prefix=str(args.reuse_env.resolve()), source_revision=REVISION, gpu=gpu,
             budget_hours=args.budget_hours,
             sources={name: hashlib.sha256(value.encode()).hexdigest() for name, value in sources.items()})
@@ -205,9 +236,13 @@ def main():
             atomic(study/'planning.json', projection())
         for name, sha in manifest['sources'].items():
             assert digest(study/(name+'.py'))==sha, 'Saved source snapshot changed'
-        pointer.write_text(str(study)+'\n')
         ledger_path = study/'incremental_budget.json'
-        ledger = read(ledger_path) if ledger_path.exists() else dict(charged_hours=0., invocations=[])
+        if not ledger_path.exists():
+            if inherited is None and lineage:
+                inherited = carried_ledger(Path(lineage['study']), args.budget_hours)
+            atomic(ledger_path, inherited if inherited is not None else dict(charged_hours=0., invocations=[]))
+        ledger = read(ledger_path)
+        pointer.write_text(str(study)+'\n')
         pending = validate_ledger(ledger)
         if args.settle_interrupted_hours is not None:
             settle_receipt(ledger, args.settle_interrupted_hours)
