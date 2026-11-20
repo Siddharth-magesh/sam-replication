@@ -1,0 +1,26 @@
+{
+  "source_study": "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf",
+  "source_sha256": {
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/lambda_selection.json": "a629707a1146ff5cb8f733b9073570912720bf7bae46e85146de7d11c4de2dea",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/manifest.json": "a25730ba6766c930f10391e7008ecbc85af9b151b2d60d3e60209e868cde1b6d",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/status.json": "1f772b4f9e4358991e6b6708d65034c61cdb01a4254db70cea48e3e0de8c5da8",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/tune_lambda_0.0/config.json": "c0138096b7a8a0da1bc6cea342eaa944ad7734486d2e30e23d1e7fa158eb1817",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/tune_lambda_0.0/train_result.json": "823591f6bf3f6ac080f5b2d9fc86d72d3ee630f6491ba16c9e047d68dc6089b4",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/tune_lambda_0.0/history.json": "86af232d9377ed1d1b6148ea1f8b4cf68f389f8369a006c5b30fd8331d2f4e56",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/tune_lambda_0.0/latest.msgpack": "c98c980d478fc56dba794e3787c794be5493ab8cdb500a48d1821260b90cf036",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/tune_lambda_0.0/evaluation_state.msgpack": "6a044e186b41d948400ff952fe0e8fac2711f5d7947bb73c222aea40cbf33504",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/tune_lambda_0.01/config.json": "6577219f7805c634cb09de2f21a611d83d47a9ab4a82b9f0e5938df9e267bd42",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/tune_lambda_0.01/train_result.json": "037bc5ec947bf2699fba8e25378fb12e94203affad6c3a467fff7a1f9b108eb9",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/tune_lambda_0.01/history.json": "283939ca6cb02e448c37124eb8e5e8dac5c8e8943b3ccd7abf8d58877549475a",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/tune_lambda_0.01/latest.msgpack": "6539b0770dcbfd7e43b0c3d86d7367496e5a220d5e0100fb9c0ea3e7c219452a",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/tune_lambda_0.01/evaluation_state.msgpack": "728549cf865633b40eea8ba607870a8cb2489f4541a11b4eb02d58de1d965f0c",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/tune_lambda_0.1/config.json": "a5e8ab08966987d05f002e734fc2e10c16480077de7727a690d945910b68c874",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/tune_lambda_0.1/train_result.json": "4dabca145567ea82a0f5ba50ebbd17aa20194f48ab3bed6f964b1d87fa60b7db",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/tune_lambda_0.1/history.json": "92cc13fc8bd6629c324158d04d0a405cdf15784a00c77d98597c0fa47e554cc7",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/tune_lambda_0.1/latest.msgpack": "407ea6e43947b1aa8c9a1ea70c1c32c82cf144a01db9209189e865bdfce8cdb8",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/tune_lambda_0.1/evaluation_state.msgpack": "6ead2255e3daaf96f9285b41b48eb6de6988d6ff2f6cc45c7d7541f05b6751d6"
+  },
+  "loader_sha256": "d96caf2717736889989ae8d22bc03a9afae9f289abd05dd652aa929b2a52aa06",
+  "validation_probe_seed": 271828,
+  "note": "Post-hoc evaluation only; original results and lambda selection preserved."
+}

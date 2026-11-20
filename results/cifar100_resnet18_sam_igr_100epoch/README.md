@@ -91,6 +91,22 @@ Suggested draft paragraph:
 
 > On CIFAR-100 with ResNet-18, SAM achieved 77.07 ± 0.07% clean test accuracy versus 76.43 ± 0.30% for SGD across three seeds, with a mean paired gain of 0.65 percentage points. SAM also had lower mean input-gradient sensitivity. However, validation selected zero input-gradient regularization, so the final IGR arm did not constitute an active intervention on input stability. Our results therefore support a SAM–input-stability association but leave the proposed alternative mechanism unresolved. Nonzero IGR settings performed poorly during validation tuning, and the evaluation protocol required training-only BatchNorm recalibration after earlier numerical failures.
 
+## Post-hoc validation sensitivity diagnostic
+
+On November 20, evaluated the saved epoch-100 tuning models (development seed 42) on the same balanced 1,000 validation images, 10 per class, probe seed 271828. Used each model's saved calibrated BN. No retraining, test-set access or lambda re-selection occurred; original checkpoint, model/BN, optimizer and study evidence integrity checks passed.
+
+| IGR lambda | Validation accuracy (%) | Mean input-gradient L2 | Mean squared L2 | L2 reduction vs zero |
+| --- | --- | --- | --- | --- |
+| 0 | 76.70 | 19.2810 | 1173.0662 | 0% |
+| 0.01 | 57.10 | 12.3270 | 302.3573 | 36.07% |
+| 0.1 | 57.70 | 7.9026 | 108.1007 | 59.01% |
+
+Active IGR reduced the measured input sensitivity but reduced validation accuracy by 19.6/19.0 percentage points in these tuning models. It did not reproduce the desired accuracy benefit at these settings. This weakens the proposed operational prediction for this configuration; it neither identifies SAM's causal mechanism nor rules out other regularization strengths. This is a post-hoc, single-development-seed result, not a three-seed test. These subset accuracies are distinct from the original 5,000-image tuning scores and official-test results. No new weight-sharpness measurement was made.
+
+Data: [validation_comparison.csv](validation_probe/validation_comparison.csv), [comparison.json](validation_probe/comparison.json), [status.json](validation_probe/status.json), [provenance.json](validation_probe/provenance.json). Attempt `20261120_230049_d80b2d` completed in tmux with exit code 0: 76.71 seconds (0.0213094 hours), cumulative study ledger now 7.430089 hours. Earlier accounting below remains the pre-probe snapshot. Idle GPU allocation and transfer time are excluded.
+
+Shareable local ZIP: `experimental_results/js2_cifar100_full/20261120_230049_d80b2d_validation_probe.zip`. SHA-256 verified against remote: `acfa5426a9b129aff95c971e6da84175affe446ae63d6698bd31656f050d60f7`. Includes per-model logs/metrics, subset indices and source snapshots. A separate launcher log is saved alongside it. The instance remains active following this diagnostic.
+
 ## Runtime, files and provenance
 
 The successful v3 invocation took **5.3746 hours**, covering tuning, training, evaluation and orchestration. The cumulative ledger was **7.4088 hours**, including **2.0342 hours** of earlier attempts/diagnostics; do not add these totals together. The approximately 16.22-hour planning estimate was conservative, not measured runtime. Idle allocation, archive transfers and unrelated Colab setup are excluded. Do not add this cumulative ledger blindly to the separate 50-epoch ledger without reconciling their scope.

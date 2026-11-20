@@ -1,6 +1,17 @@
 # Full A100 ResNet-18 / CIFAR-100 study
 
-## Next diagnostic: validation sensitivity of the completed tuning models
+## Completed diagnostic: validation sensitivity of the tuning models
+
+Executed successfully on csci567-sam in tmux `igr-validation`, November 20. Attempt: `20261120_230049_d80b2d`; all three checkpoints passed, exit code 0, elapsed 76.71 seconds. No implementation changes were required. The commands below create another charged attempt; do not rerun simply to view these results.
+
+Persistent launcher log (available after tmux exits):
+
+```bash
+cat /workspace/sam_igr_a100_timing/validation_probe_launcher_20261120_230048.log
+cat /workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/validation_probes/20261120_230049_d80b2d/validation_comparison.csv
+```
+
+The evidence ZIP is in that `validation_probes` directory, named `20261120_230049_d80b2d_validation_probe.zip`. A checksum-verified local copy is under `experimental_results/js2_cifar100_full/`; compact tables are under `results/cifar100_resnet18_sam_igr_100epoch/validation_probe/`. The instance was left active after this diagnostic; from WSL, use `js2 stop csci567-sam` when no other job needs it.
 
 The v3 study `20261120_043937_4863bf` is complete. Historical launch/debug instructions below describe earlier stages; do not launch the full study again for this diagnostic.
 
@@ -29,7 +40,7 @@ All three source jobs require `latest.msgpack` and `evaluation_state.msgpack`, v
 
 Outputs are isolated under `<study>/validation_probes/<attempt>/`. The command prints `VALIDATION PROBE RESULTS` and `DOWNLOAD` for `<attempt>_validation_probe.zip`. Send the ZIP containing `validation_comparison.csv`, `comparison.json`, per-model metrics/statuses/logs, subset indices and source/provenance records. Failure attempts and their logs are retained. Running the command again creates a new, separately charged diagnostic attempt and never retrains a model; retain earlier attempts. No automatic hypothesis decision is produced. Download evidence and manually shelve the instance when finished and no other job is using it.
 
-Local Python 3.8 syntax, dry-run, source-loader dispatch suppression, paired configuration/checkpoint guards and known-answer summary checks passed. GPU measurement remains **to verify**; no evaluation was launched during implementation.
+Local Python 3.8 syntax and remote plan checks passed. The authorized A100 run subsequently completed all three measurements, including saved-source/checkpoint/configuration guards, common subset identity, unchanged optimizer/model/BN and original evidence hashes. This verifies this diagnostic execution, not a causal hypothesis.
 
 ## Active v3 correction
 

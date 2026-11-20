@@ -1,0 +1,93 @@
+{
+  "status": "complete",
+  "rows": [
+    {
+      "status": "complete",
+      "job": "tune_lambda_0.0",
+      "seed": 42,
+      "igr_lambda": 0.0,
+      "epochs": 100,
+      "n": 1000,
+      "validation_probe_sha256": "09105fe10de80b57a2cd12404467c8cceffe97c49005c90aeed536acda9945f8",
+      "validation_accuracy": 76.7,
+      "validation_ce": 0.9176479568481445,
+      "input_gradient_l2": 19.281043701171875,
+      "input_gradient_squared_l2": 1173.06615625,
+      "evaluation_model_bn_sha256": "c4b8fdbb5ad13b18e7c016a2149c2f9714610ac79b1fd81d64e69a2aaf7e918e",
+      "weights_and_bn_unchanged": true,
+      "checkpoint_sha256": "c98c980d478fc56dba794e3787c794be5493ab8cdb500a48d1821260b90cf036",
+      "evaluation_state_sha256": "6a044e186b41d948400ff952fe0e8fac2711f5d7947bb73c222aea40cbf33504",
+      "saved_worker_sha256": "84d1d7fe912d82aaeab5cc6c79dbc89f28518ae7494b3e98896f559fb7cdaa5b",
+      "seconds": 22.47855893899998,
+      "environment": {
+        "python": "3.8.20",
+        "jax": "0.2.6",
+        "flax": "0.2.2",
+        "numpy": "1.18.5"
+      },
+      "note": "Post-hoc validation diagnostic, development seed 42; no test access or training updates.",
+      "accuracy_delta_vs_lambda0_pp": 0.0,
+      "input_gradient_l2_ratio_vs_lambda0": 1.0,
+      "input_gradient_squared_l2_ratio_vs_lambda0": 1.0
+    },
+    {
+      "status": "complete",
+      "job": "tune_lambda_0.01",
+      "seed": 42,
+      "igr_lambda": 0.01,
+      "epochs": 100,
+      "n": 1000,
+      "validation_probe_sha256": "09105fe10de80b57a2cd12404467c8cceffe97c49005c90aeed536acda9945f8",
+      "validation_accuracy": 57.1,
+      "validation_ce": 1.8386909942626952,
+      "input_gradient_l2": 12.326976806640625,
+      "input_gradient_squared_l2": 302.357275390625,
+      "evaluation_model_bn_sha256": "d0b5062515d87c50e2229b7ff27ea0932f136bf91bc1306b67ff3b769f824386",
+      "weights_and_bn_unchanged": true,
+      "checkpoint_sha256": "6539b0770dcbfd7e43b0c3d86d7367496e5a220d5e0100fb9c0ea3e7c219452a",
+      "evaluation_state_sha256": "728549cf865633b40eea8ba607870a8cb2489f4541a11b4eb02d58de1d965f0c",
+      "saved_worker_sha256": "84d1d7fe912d82aaeab5cc6c79dbc89f28518ae7494b3e98896f559fb7cdaa5b",
+      "seconds": 16.915482621999956,
+      "environment": {
+        "python": "3.8.20",
+        "jax": "0.2.6",
+        "flax": "0.2.2",
+        "numpy": "1.18.5"
+      },
+      "note": "Post-hoc validation diagnostic, development seed 42; no test access or training updates.",
+      "accuracy_delta_vs_lambda0_pp": -19.6,
+      "input_gradient_l2_ratio_vs_lambda0": 0.6393314074533947,
+      "input_gradient_squared_l2_ratio_vs_lambda0": 0.2577495512761069
+    },
+    {
+      "status": "complete",
+      "job": "tune_lambda_0.1",
+      "seed": 42,
+      "igr_lambda": 0.1,
+      "epochs": 100,
+      "n": 1000,
+      "validation_probe_sha256": "09105fe10de80b57a2cd12404467c8cceffe97c49005c90aeed536acda9945f8",
+      "validation_accuracy": 57.7,
+      "validation_ce": 1.552390090942383,
+      "input_gradient_l2": 7.902570190429688,
+      "input_gradient_squared_l2": 108.100662109375,
+      "evaluation_model_bn_sha256": "73143614e20b08dcca8fe4d8cafdf102710bbfacde468dcf3bc812df92c733c2",
+      "weights_and_bn_unchanged": true,
+      "checkpoint_sha256": "407ea6e43947b1aa8c9a1ea70c1c32c82cf144a01db9209189e865bdfce8cdb8",
+      "evaluation_state_sha256": "6ead2255e3daaf96f9285b41b48eb6de6988d6ff2f6cc45c7d7541f05b6751d6",
+      "saved_worker_sha256": "84d1d7fe912d82aaeab5cc6c79dbc89f28518ae7494b3e98896f559fb7cdaa5b",
+      "seconds": 17.259466812000028,
+      "environment": {
+        "python": "3.8.20",
+        "jax": "0.2.6",
+        "flax": "0.2.2",
+        "numpy": "1.18.5"
+      },
+      "note": "Post-hoc validation diagnostic, development seed 42; no test access or training updates.",
+      "accuracy_delta_vs_lambda0_pp": -19.0,
+      "input_gradient_l2_ratio_vs_lambda0": 0.40986215854847013,
+      "input_gradient_squared_l2_ratio_vs_lambda0": 0.09215222989208542
+    }
+  ],
+  "note": "Exploratory, single development seed; same validation subset and calibrated BN. Not a causal or multi-seed hypothesis test."
+}
