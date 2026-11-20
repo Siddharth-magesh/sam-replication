@@ -129,6 +129,8 @@ Owners marked TBD should be filled in at the next meeting. Each task should have
 
 ## 10. Risks and open questions
 
+November 19 update to task 20: study 20261119_200309_788f36 failed during lambda 0.01 epoch 75; checkpoint at epoch 74 retained, 1.1624682491 active hours charged, final runs not started. Centered-variance BN candidate and bounded, budgeted same-checkpoint comparison prepared. Root cause, GPU compatibility and repair effectiveness **(to verify)**; full study remains blocked on numerical diagnosis.
+
 **A100 environment compatibility.** The old CUDA 11.0 `jaxlib` should support the A100's architecture, but we have only tested on a T4. If it fails on the A100, the fallback is the PyTorch implementation by David Samuel (`davda54/sam`), which the paper's authors acknowledge. It is third-party, so we would have to tell the TAs and say so in the report.
 
 **Budget overrun.** Section 8's times are guesses. A slower-than-expected A100 epoch changes the plan, so task 2 must happen early.
@@ -142,6 +144,8 @@ Owners marked TBD should be filled in at the next meeting. Each task should have
 The report is 4 pages excluding references and appendix, in a standard conference template. The appendix must contain extra plots, hyperparameters, failed attempts, a link to our code, a short statement of who did what, and a statement of how AI tools were used. We are allowed to use AI tools to understand the paper, debug code, and polish writing, but not to generate the analysis or conclusions, and every member must be able to explain the report if the TAs ask. To make the appendix statement easy, **each member should keep a running note of where they used AI help** (which task, which tool), added to the bottom of this file. Report failed runs and changed plans honestly, and do not adjust the experiment after seeing results to make it say something. Check-in and report-review milestones are not graded separately, but groups that skip them rarely do well, so everyone should come prepared.
 
 ## 12. Changelog
+
+- **2026-11-19**: Preserved failed IGR study; added component-level non-finite diagnostics, opt-in centered BN and 15-minute checkpoint replay using the existing ledger. No GPU launch; full repair (to verify).
 
 - **2026-11-19**: Reviewed full study against successful timing code and JS2 paths. Added explicit latest-study resume, duplicate-study prevention, cache precheck and monitor/final progress instructions; scientific updates unchanged. Local source/CLI/selection/accounting checks passed; full GPU execution remains (to verify).
 
@@ -206,6 +210,8 @@ The report is 4 pages excluding references and appendix, in a standard conferenc
 - **2026-10-20**: Tracker created. Environment working on Colab T4, SAM and SGD smoke tests passed, code findings documented, shared notebook prepared. A100 setup and first real reproduction not yet started.
 
 ## 13. AI-usage log (for the appendix statement)
+
+- **2026-11-19**: Codex inspected remote failure evidence and official legacy Flax BN source, implemented an isolated numerical candidate and checkpoint diagnostic, and performed local syntax/dry-run/source checks. Local NumPy check unavailable; root cause and GPU fix remain (to verify); no scientific conclusion or new training.
 
 - **2026-11-19**: Codex audited the teammate's full-study launcher, compared scientific ASTs to the measured timing implementation, checked host-side selection/recovery guards and refined JS2 operating instructions. No training, speedup claim or new research result.
 

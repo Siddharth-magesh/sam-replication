@@ -16,7 +16,7 @@ import flax
 from flax import nn, optim, serialization
 C = json.loads(Path(sys.argv[1]).read_text())
 OUT = Path(C['output']); PHASE = sys.argv[2]
-assert PHASE in ('train', 'evaluate')
+assert PHASE in ('train', 'evaluate', 'diagnose')
 OUT.mkdir(parents=True, exist_ok=True)
 sys.path.insert(0, C['repo'])
 from sam_jax.imagenet_models.resnet import ResNetBlock
@@ -94,12 +94,42 @@ def eval_batches(xx, yy, ids):
         mask=(np.arange(B)<n).astype(np.float32)
         yield x,y,mask
 
+class BatchNorm(nn.Module):
+    """Opt-in numerical candidate; same state/parameter names as Flax 0.2.2.
+
+    Only used by the diagnostic until GPU evidence supports a protocol change.
+    Centered second moments avoid cancellation in E[x*x] - E[x]**2.
+    """
+    def apply(self, x, use_running_average=False, momentum=0.9,
+              epsilon=1e-5, dtype=jnp.float32,
+              scale_init=nn.initializers.ones):
+        x = jnp.asarray(x, jnp.float32)
+        shape = (x.shape[-1],)
+        mean_state = self.state('mean', shape, jax.nn.initializers.zeros)
+        var_state = self.state('var', shape, jax.nn.initializers.ones)
+        if use_running_average:
+            mean, var = mean_state.value, var_state.value
+        else:
+            axes = tuple(range(x.ndim-1))
+            mean = jnp.mean(x, axis=axes)
+            var = jnp.mean(jnp.square(x-mean), axis=axes)
+            if not self.is_initializing():
+                mean_state.value = momentum*mean_state.value+(1-momentum)*mean
+                var_state.value = momentum*var_state.value+(1-momentum)*var
+        # Do not hide an already corrupt negative running variance by clipping it.
+        scale = self.param('scale', shape, scale_init)
+        bias = self.param('bias', shape, jax.nn.initializers.zeros)
+        multiplier = jax.lax.rsqrt(var+epsilon)*scale
+        return jnp.asarray((x-mean)*multiplier+bias, dtype)
+
+
 class CifarResNet18(nn.Module):
     def apply(self,x,train=True):
         # Raw [0,1] pixel coordinates for IGR and attacks, normalization INSIDE model.
         x=(x-jnp.array([0.5071,0.4867,0.4408]))/jnp.array([0.2675,0.2565,0.2761])
         conv=nn.Conv.partial(bias=False,dtype=jnp.float32)
-        bn=nn.BatchNorm.partial(use_running_average=not train,momentum=0.9,epsilon=1e-5,dtype=jnp.float32)
+        bn_module = BatchNorm if C.get('bn_implementation') == 'centered' else nn.BatchNorm
+        bn=bn_module.partial(use_running_average=not train,momentum=0.9,epsilon=1e-5,dtype=jnp.float32)
         x=nn.relu(bn(conv(x,64,(3,3),(1,1),padding='SAME',name='stem'),name='stem_bn'))
         for stage in range(4):
             for block in range(2):
@@ -266,7 +296,7 @@ def restore():
     opt, state = fresh(C['seed'])
     ready((opt, state))
     initial = state_hash(opt.target, state)
-    path = OUT/'latest.msgpack'
+    path = Path(C['diagnostic_checkpoint']) if PHASE == 'diagnose' else OUT/'latest.msgpack'
     epoch = 0
     if path.exists():
         restored = serialization.from_bytes(checkpoint_payload(opt, state, 0), path.read_bytes())
@@ -274,6 +304,52 @@ def restore():
         assert 0 <= epoch <= C['epochs']
         finite((opt, state))
     return opt, state, epoch, initial
+
+
+def metric_report(metrics):
+    return {key: dict(finite=bool(np.isfinite(np.asarray(value)).all()),
+                      value=str(np.asarray(value))) for key, value in metrics.items()}
+
+
+def bn_report(state):
+    values = []
+    def walk(obj, path=''):
+        if isinstance(obj, dict):
+            for key, value in obj.items(): walk(value, path+'/'+str(key))
+        elif path.endswith('/var'):
+            a = np.asarray(obj)
+            values.append(dict(path=path, minimum=str(a.min()), maximum=str(a.max()),
+                               finite=bool(np.isfinite(a).all()), negative=int((a < 0).sum())))
+    walk(serialization.to_state_dict(state))
+    return values
+
+
+def diagnose():
+    opt, state, completed, _ = restore()
+    assert completed == C['diagnostic_completed_epoch'] < C['epochs']
+    before = dict(completed_epoch=completed, bn=bn_report(state),
+                  state_sha256=state_hash(opt.target, state))
+    save('diagnostic_before.json', before)
+    before['validation'] = evaluate(opt.target, state, images, labels, vi)
+    save('diagnostic_before.json', before)
+    for i, (x, y) in enumerate(batches(completed, C['seed'])):
+        check_time()
+        fraction = (completed*STEPS+i)/(C['epochs']*STEPS)
+        lr = np.float32(C['lr']*.5*(1+math.cos(math.pi*fraction)))
+        new_opt, new_state, metrics = ready(STEPS_FN[C['method']](
+            opt, state, x, y, lr, np.float32(C['igr_lambda'])))
+        try:
+            finite(metrics); finite((new_opt, new_state))
+        except AssertionError:
+            save('numerical_failure.json', dict(epoch=completed+1, batch=i+1,
+                 metrics=metric_report(metrics), bn_before=bn_report(state), bn_after=bn_report(new_state)))
+            raise
+        opt, state = new_opt, new_state
+        if i % 50 == 0: print('Diagnostic batch', i+1, '/', STEPS, flush=True)
+    save('diagnostic_result.json', dict(status='finite_epoch_replay',
+         bn_implementation=C.get('bn_implementation', 'legacy'), epoch=completed+1,
+         batches=STEPS, validation=evaluate(opt.target, state, images, labels, vi),
+         bn=bn_report(state), note='One replay only; does not establish full-run stability or scientific success.'))
 
 
 def train_full():
@@ -295,7 +371,12 @@ def train_full():
             fraction = (epoch*STEPS+i)/(C['epochs']*STEPS)
             lr = np.float32(C['lr']*.5*(1+math.cos(math.pi*fraction)))
             opt, state, metrics = ready(STEPS_FN[method](opt, state, x, y, lr, np.float32(C['igr_lambda'])))
-            finite(metrics)
+            try:
+                finite(metrics)
+            except AssertionError:
+                save('numerical_failure.json', dict(epoch=epoch+1, batch=i+1,
+                     metrics=metric_report(metrics), bn=bn_report(state)))
+                raise
             ce_sum += float(metrics['clean_ce']); p_sum += float(metrics['igr_penalty'])
         train_s = time.perf_counter()-tick
         finite((opt, state))
@@ -390,7 +471,8 @@ try:
     save(PHASE+'_environment.json', dict(python=platform.python_version(), jax=jax.__version__,
         flax=flax.__version__, numpy=np.__version__, tensorflow=tf.__version__, gpu=live))
     save(PHASE+'_status.json', dict(status='running'))
-    if PHASE == 'train': train_full()
+    if PHASE == 'diagnose': diagnose()
+    elif PHASE == 'train': train_full()
     else: evaluate_final()
     save(PHASE+'_status.json', dict(status='complete', seconds=time.monotonic()-BEGIN))
 except BaseException as exc:

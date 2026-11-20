@@ -86,6 +86,24 @@ Use the job/phase listed in `progress.json` for later logs (`train.log` or `eval
 
 The launcher shares locks with the timing and earlier WRN launcher and refuses an already busy GPU. Notebook jobs do not honor these locks, so do not start other GPU work concurrently. GNU `timeout` enforces the remaining invocation allowance even if the parent process dies. Interrupt with Ctrl-C for a graceful stop. Do not delete partial evidence.
 
+## Numerical failure on November 19: diagnostic first
+
+Study `20261119_200309_788f36` stopped in lambda 0.01 epoch 75 with a non-finite training metric; epoch 74 was saved. Lambda 0 finished at 76.94% validation accuracy. No final experiments ran. Do not resume this numerical failure unchanged or remove the finite checks.
+
+The diagnostic replays epoch 75 from the same saved optimizer/BN checkpoint twice: legacy Flax BN and an opt-in centered-variance BN candidate. The latter computes mean squared centered activations instead of subtracting two large second moments. It preserves BN names, initialization, momentum and epsilon; negative saved running variances are reported, never silently clipped. This is a candidate numerical correction, **not a confirmed root cause or verified full-run repair (to verify)**. The IGR train/inference BN mismatch also remains a possible source of poor validation accuracy.
+
+After these files are available on the machine, run only this diagnostic inside your existing tmux session:
+
+```bash
+cd /workspace/sam-replication
+git pull --ff-only origin repro
+python3 -u -B experiments/cifar100_resnet18_sam_igr_full/diagnose.py \
+  --study-dir /workspace/sam_igr_a100_timing/full_runs/20261119_200309_788f36 \
+  --execute
+```
+
+It has a 15-minute total ceiling, uses the existing environment/data, and charges the existing study ledger. Without `--execute` it only prints a plan. Results go into `STUDY/diagnostics/TIMESTAMP/`: `comparison.json`, per-variant logs, `diagnostic_before.json`, and either `diagnostic_result.json` or `numerical_failure.json`. The original checkpoint, histories, frozen source snapshots and results remain untouched. No final training launches. Preserve the entire diagnostic folder; a finite replay with chance-level validation is not a successful repair. GPU/checkpoint compatibility and stability remain **(to verify)**. After diagnosis, any adopted BN change needs a documented new protocol and retained prior budget, not mixed old/new tuning results.
+
 ## Resume and budget recovery
 
 Checkpoints include optimizer/momentum, model weights, BN state and completed epoch. Each completed epoch is committed atomically; a partial epoch is replayed using the same deterministic augmentation generator. GPU nondeterminism means bitwise equality of a resumed trajectory is not guaranteed. Source hashes, environment prefix, runtime revision, GPU identity, protocol and original cap must match. Keep the same checkout version after starting a study.
