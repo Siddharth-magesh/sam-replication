@@ -1,0 +1,23 @@
+{
+  "selected_lambda": 0.0,
+  "tuning": [
+    {
+      "lam": 0.0,
+      "validation_accuracy": 76.92,
+      "validation_ce": 0.8920727988243103
+    },
+    {
+      "lam": 0.01,
+      "validation_accuracy": 58.7,
+      "validation_ce": 1.7918526927947998
+    },
+    {
+      "lam": 0.1,
+      "validation_accuracy": 57.2,
+      "validation_ce": 1.5909901229858399
+    }
+  ],
+  "rejected": [],
+  "test_used": false,
+  "rule": "Highest final-epoch validation accuracy; ties smallest lambda"
+}

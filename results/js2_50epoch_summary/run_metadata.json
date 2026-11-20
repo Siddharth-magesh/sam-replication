@@ -1,0 +1,26 @@
+{
+  "mode": "replication",
+  "deterministic_reductions": true,
+  "tf_deterministic_ops": "0",
+  "cudnn_deterministic": "1",
+  "budget_limit_hours": 40.0,
+  "revision": "f7b9ff46ee0deab8004d5508baf68b7e7c3dad1a",
+  "seeds": [
+    0
+  ],
+  "logical_replicas": 8,
+  "batch_size": 256,
+  "subbatch_size": 32,
+  "lr": 0.1,
+  "weight_decay": 0.0005,
+  "rho": 0.05,
+  "gradient_clipping": 5.0,
+  "experiment": "cifar10_wrn28x10_sam_sgd_50epochs_seed0",
+  "schedule_epochs": 50,
+  "training_epochs": 50,
+  "dataset": "CIFAR-10",
+  "model": "WideResnet28x10",
+  "seed_count": 1,
+  "run_id": "20261118_231039_f309d8",
+  "primary_endpoint": "final epoch 50 test error"
+}

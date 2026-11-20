@@ -1,0 +1,6 @@
+{
+  "cumulative_charged_hours": 7.4087796298886115,
+  "prior_attempts_and_diagnostics_hours": 2.0341989423430555,
+  "completed_v3_invocation_hours": 5.3745806875455555,
+  "excludes": "Idle allocation, transfer and archival time; not a total project invoice"
+}

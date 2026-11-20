@@ -1,0 +1,57 @@
+{
+  "protocol": "cifar100_resnet18_sam_igr_full_v3_centered_bn",
+  "epochs": 100,
+  "train_per_class": 450,
+  "bn_calibration_batches": 100,
+  "bn_implementation": "centered",
+  "batch_size": 128,
+  "split_seed": 2026,
+  "lr": 0.1,
+  "momentum": 0.9,
+  "weight_decay": 0.0005,
+  "clip": 5.0,
+  "rho": 0.05,
+  "source_revision": "7f34662deec03341b78cccd4ce18ec2f7900429b",
+  "gpu": "NVIDIA A100-SXM4-40GB, 40960",
+  "probe_seed": 31415,
+  "pgd_epsilon": 0.03137254901960784,
+  "pgd_alpha": 0.00784313725490196,
+  "pgd_steps": 20,
+  "pgd_restarts": 3,
+  "sharp_radii": [
+    0.025,
+    0.05
+  ],
+  "sharp_steps": 10,
+  "sharp_restarts": 3,
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "development_seed": 42,
+  "tuning_lambdas": [
+    0,
+    0.01,
+    0.1
+  ],
+  "selected_igr_lambda": 0.0,
+  "clean_test_examples": 10000,
+  "probe_examples": 1000,
+  "run_id": "20261120_043937_4863bf",
+  "launcher_commit": "f494329",
+  "runtime_environment": {
+    "python": "3.8.20",
+    "jax": "0.2.6",
+    "flax": "0.2.2",
+    "numpy": "1.18.5",
+    "tensorflow": "2.3.1",
+    "gpu": "NVIDIA A100-SXM4-40GB, 40960"
+  },
+  "source_hashes": {
+    "run": "40605a120f3184b1cdbf394fea9320574f86c76a473a0b7551544e7317c60872",
+    "worker": "84d1d7fe912d82aaeab5cc6c79dbc89f28518ae7494b3e98896f559fb7cdaa5b",
+    "runtime": "04c82e4a60904fc6846f8cd2339a9a10dfc7290f8c2ae5c8face83a25d92d009",
+    "report": "32445dc2a921aac4a9208b073325aa5315fc078f87bc089fc8419f983d8d0f93"
+  }
+}

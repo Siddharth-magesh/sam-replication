@@ -1,0 +1,11 @@
+{
+  "run_id": "20261118_231039_f309d8",
+  "archive_sha256": "5b4d87513f0ecd1539c3a264fac9d1ad898c96eed493c92cb79cd2faee6acfe0",
+  "archive_verification": "Previously verified remote/local archive; see docs/results/js2_50epoch_results_analysis.md",
+  "curated_files_sha256": {
+    "final_results.csv": "6fe45d3712951493da4170fcc74f5bef83757f5038b708bf5601520aa72e07ae",
+    "learning_curves.png": "0ebff85ae67bb8067cd44f123ded83391fa098963078e7d5df9ed4f0dd1b09a2",
+    "epoch_metrics.csv": "8c226a846103132198db77d36006187de3db1d4a3cd5e07ea0dc8bdb8a8de016",
+    "run_metadata.json": "9d54acf8fb052f59e9ebb0c0fa76fc7f8d3cf9d6469aa08417f62545c5c9201a"
+  }
+}

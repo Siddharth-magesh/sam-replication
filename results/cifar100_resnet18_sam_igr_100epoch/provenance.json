@@ -1,0 +1,17 @@
+{
+  "run": "20261120_043937_4863bf",
+  "completed_evaluations": 9,
+  "final_checkpoints": 9,
+  "all_checkpoints": 12,
+  "evidence_sha256": "bec6db920fb821636eaff638531d1f969030325289d3f965e03cff4428a8210c",
+  "full_archive_sha256": "687252e9d8c737bdda400a69f64a3b08a76e06c178c21074f59fea78161e40fb",
+  "checksums_match_remote": true,
+  "curated_source_files_sha256": {
+    "per_seed_metrics.csv": "29e5d64d1007e80f3bbef0c576052bd58b6d9952cc886cf304a06a31b2d6651e",
+    "mean_std_metrics.csv": "14d7fed102a9f636428fba318aae5115be463e3e94c0bbf0a3bb3f35a1efb97c",
+    "paired_differences.csv": "ce424a238bb441326ffb6c6dadd16ffd7fd7d7eb5eeb968a2631c4175d36f6dd",
+    "lambda_selection.json": "a629707a1146ff5cb8f733b9073570912720bf7bae46e85146de7d11c4de2dea",
+    "summary.json": "d00e13bf04b115751889d1a4c5125680d9809760d74992a9f2e683c796c25959"
+  },
+  "checks": "Recomputed means, sample SDs and paired t intervals; 12 ordered 100-epoch histories and 9 complete final evaluations."
+}

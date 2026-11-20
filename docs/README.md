@@ -1,5 +1,8 @@
 # Project documentation
 
+- [Final 50-epoch result package](../results/js2_50epoch_summary/README.md): CIFAR-10 / WRN-28-10, one seed, completed reduced replication.
+- [Completed hypothesis experiment](../results/cifar100_resnet18_sam_igr_100epoch/README.md): CIFAR-100 / ResNet-18, three seeds; lambda-zero selection makes the active-IGR mechanism comparison inconclusive.
+
 - [Project tracking](project_tracking.md): experiment status and history.
 - [Technical notes](notes.md): implementation decisions and evidence.
 - [Coding guidelines](project_coding_guidelines.md): repository conventions.

@@ -1,0 +1,14 @@
+{
+  "complete": true,
+  "completed_evaluations": 9,
+  "missing": [],
+  "caveats": [
+    "Three seeds; uncertainty estimates have low precision.",
+    "Marginal paired t intervals assume independent seed differences and are not multiplicity adjusted.",
+    "No equivalence margin was specified; similar point estimates do not establish equivalence.",
+    "Sharpness is an absolute-L2 parameterization-sensitive optimization lower-bound proxy.",
+    "PGD-20 with three restarts can overestimate robustness; no masking certificate.",
+    "Cross-method associations do not identify the causal mechanism inside SAM.",
+    "No automated hypothesis conclusion. Preserve all tuning, failed and resumed runs."
+  ]
+}
