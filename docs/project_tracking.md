@@ -124,6 +124,7 @@ One full comparison (SAM, SGD-200, SGD-400) is roughly 12 to 16 A100-hours. The 
 
 | 19 | A100 one-epoch SGD/SAM/IGR timing before full experiment | Code lead | Nov 18 | Notebook 08 and experiments/cifar100_resnet18_a100_one_epoch_timing Python CLI prepared: 45k train / 5k validation, batch 128, one epoch per method after discarded warm-up, independent processes, real timing/optional checkpoint and budget projection only. Teammate supplied completed A100 timing (20261119_153717_b8692b): approximately 17.47/37.36/39.53 training seconds for SGD/SAM/IGR. Full-study projection approximately 15.02 h including tuning/reserve/allowance; not measured full-run time. |
 | 20 | Full CIFAR-100 ResNet-18 SGD/SAM/IGR study | Code lead | Nov 20 | Completed v3: all 12 training runs and 9 evaluations; SGD/SAM/IGR(0) mean accuracy 76.43/77.07/76.52%. Lambda zero selected; active-IGR mechanism comparison inconclusive. Curated results and report: results/cifar100_resnet18_sam_igr_100epoch/. |
+| 21 | Validation sensitivity of saved IGR tuning models | Code lead | Nov 20 | Prepared evaluation-only probe of lambda 0/0.01/0.1, same 1,000 validation images and saved calibrated BN, checkpoint/source guards, 15-minute cap with existing ledger receipts and separate evidence ZIP. Local checks passed; GPU execution pending. |
 
 Owners marked TBD should be filled in at the next meeting. Each task should have exactly one owner, even if several people help.
 
@@ -150,6 +151,8 @@ November 19 update to task 20: study 20261119_200309_788f36 failed during lambda
 The report is 4 pages excluding references and appendix, in a standard conference template. The appendix must contain extra plots, hyperparameters, failed attempts, a link to our code, a short statement of who did what, and a statement of how AI tools were used. We are allowed to use AI tools to understand the paper, debug code, and polish writing, but not to generate the analysis or conclusions, and every member must be able to explain the report if the TAs ask. To make the appendix statement easy, **each member should keep a running note of where they used AI help** (which task, which tool), added to the bottom of this file. Report failed runs and changed plans honestly, and do not adjust the experiment after seeing results to make it say something. Check-in and report-review milestones are not graded separately, but groups that skip them rarely do well, so everyone should come prepared.
 
 ## 12. Changelog
+
+- **2026-11-20**: Prepared validation-only sensitivity comparison for all three saved tuning checkpoints, with source/weight/BN integrity checks, separate evidence and bounded diagnostic accounting. No original training/evaluation code changed or GPU job launched.
 
 - **2026-11-20**: Verified final statistics against archived evidence; packaged both completed studies with teammate reports. No active-IGR causal claim; large archives remain local.
 
@@ -224,6 +227,8 @@ The report is 4 pages excluding references and appendix, in a standard conferenc
 - **2026-10-20**: Tracker created. Environment working on Colab T4, SAM and SGD smoke tests passed, code findings documented, shared notebook prepared. A100 setup and first real reproduction not yet started.
 
 ## 13. AI-usage log (for the appendix statement)
+
+- **2026-11-20**: Codex implemented the requested post-hoc validation checkpoint probe and checked Python syntax, no-dispatch loading, source/config/checkpoint guards and summary arithmetic locally. Drafted a teammate message; no GPU evaluation, training or hypothesis conclusions generated.
 
 - **2026-11-20**: Codex curated saved results, recomputed means/SD/paired intervals and drafted evidence-grounded Markdown handoffs. No training or new measurements; hypothesis conclusions explicitly limited by lambda-zero selection.
 

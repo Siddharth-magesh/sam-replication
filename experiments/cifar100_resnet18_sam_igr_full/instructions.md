@@ -1,5 +1,36 @@
 # Full A100 ResNet-18 / CIFAR-100 study
 
+## Next diagnostic: validation sensitivity of the completed tuning models
+
+The v3 study `20261120_043937_4863bf` is complete. Historical launch/debug instructions below describe earlier stages; do not launch the full study again for this diagnostic.
+
+The new `validation_probe.py` compares **all three completed epoch-100 tuning checkpoints**, lambda 0/0.01/0.1 on development seed 42. It scores the same fixed balanced 1,000-image validation subset (10/class, probe seed 271828) for every model, using each model's saved recalibrated BN state. It reports clean validation accuracy, mean per-image raw-pixel CE gradient L2 and squared L2, accuracy differences and sensitivity ratios relative to lambda zero. Subset accuracy differs from the earlier 5,000-image validation score; compare the new subset scores with each other.
+
+This is a post-hoc single-seed diagnostic, not a new multi-seed hypothesis test or a new lambda selection. No test images are loaded and no optimizer updates run. The loader executes the verified saved worker's definitions, omitting its training/test dispatch. Original training functions, source snapshots, selection, checkpoints, histories and test results remain untouched; their hashes are checked. The operational time journal is the only existing study file intentionally updated, to append the diagnostic charge once.
+
+Publish/pull the new scripts before running. On the prepared A100, from the repository root:
+
+```bash
+cd /workspace/sam-replication
+git pull --ff-only origin repro
+python3 -B experiments/cifar100_resnet18_sam_igr_full/validation_probe.py \
+  --study-dir /workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf
+```
+
+That prints the plan only. Add `--execute` to perform the evaluation:
+
+```bash
+python3 -u -B experiments/cifar100_resnet18_sam_igr_full/validation_probe.py \
+  --study-dir /workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf \
+  --execute
+```
+
+All three source jobs require `latest.msgpack` and `evaluation_state.msgpack`, verified against `train_result.json`. The small evidence ZIP excludes these checkpoints; use the persistent machine directory or restore the full backup at its original path. No environment installation, repair or VM lifecycle action is performed. Idle-GPU/shared-launcher locks, source/runtime verification and the existing cumulative study budget are enforced. The shared subprocess deadline is at most 15 minutes (or the smaller remaining allowance); this is a cap, not a measured completion-time estimate. Setup/CPU finalization may add a small amount of time. A crashed reservation must be settled with the existing verified-hours recovery procedure before another run.
+
+Outputs are isolated under `<study>/validation_probes/<attempt>/`. The command prints `VALIDATION PROBE RESULTS` and `DOWNLOAD` for `<attempt>_validation_probe.zip`. Send the ZIP containing `validation_comparison.csv`, `comparison.json`, per-model metrics/statuses/logs, subset indices and source/provenance records. Failure attempts and their logs are retained. Running the command again creates a new, separately charged diagnostic attempt and never retrains a model; retain earlier attempts. No automatic hypothesis decision is produced. Download evidence and manually shelve the instance when finished and no other job is using it.
+
+Local Python 3.8 syntax, dry-run, source-loader dispatch suppression, paired configuration/checkpoint guards and known-answer summary checks passed. GPU measurement remains **to verify**; no evaluation was launched during implementation.
+
 ## Active v3 correction
 
 Launched on csci567-sam: `/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf`, tmux `igr-full-v3`. Monitor with `tail -n 30 -F /workspace/sam_igr_a100_timing/full_v3_launcher.log` or `tmux attach -t igr-full-v3`. Launcher log survives tmux exits; do not start a duplicate. Full completion remains (to verify).
