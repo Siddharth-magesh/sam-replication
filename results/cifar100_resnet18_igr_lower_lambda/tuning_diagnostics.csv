@@ -1,0 +1,4 @@
+job,igr_lambda,status,full_validation_accuracy,full_validation_ce,probe_validation_accuracy,probe_validation_ce,probe_input_gradient_l2,probe_input_gradient_squared_l2
+tune_lambda_0.0001,0.0001,training_complete,74.08,1.0094969149589539,72.2,1.0463519973754882,11.819753479003905,402.75319140625
+tune_lambda_0.001,0.001,training_complete,69.52,1.2548228274345399,69.5,1.2499263687133788,11.82024072265625,373.8921171875
+tune_lambda_1e-05,1e-05,training_complete,76.94,0.9033142963171005,77.7,0.8970012893676758,15.661140258789063,790.0675390625

@@ -1,0 +1,43 @@
+{
+  "complete": true,
+  "new_final_igr_evaluations": 3,
+  "reused_reference_evaluations": 6,
+  "missing": [],
+  "selection": {
+    "selected_lambda": 1e-05,
+    "tuning": [
+      {
+        "lam": 1e-05,
+        "validation_accuracy": 76.94,
+        "validation_ce": 0.9033142963171005
+      },
+      {
+        "lam": 0.0001,
+        "validation_accuracy": 74.08,
+        "validation_ce": 1.0094969149589539
+      },
+      {
+        "lam": 0.001,
+        "validation_accuracy": 69.52,
+        "validation_ce": 1.2548228274345399
+      }
+    ],
+    "rejected": [],
+    "reference_lambda0_validation_accuracy": 76.92,
+    "selected_validation_delta_vs_lambda0_pp": 0.01999999999999602,
+    "selected_beats_lambda0": true,
+    "test_used": false,
+    "sensitivity_used": false,
+    "rule": "Highest final-epoch full-validation accuracy among the three predeclared POSITIVE lambdas; ties smallest lambda. Lambda zero is an external reference, not a candidate.",
+    "note": "Active IGR is selected by design for this exploratory extension; selection does not imply an improvement over the control."
+  },
+  "caveats": [
+    "Exploratory extension designed after seeing prior test results; not an independent confirmatory experiment.",
+    "Positive-only selection is predeclared for an active IGR intervention; it may underperform the lambda-zero reference.",
+    "Development tuning uses one seed; final IGR uses three paired seeds against reused SGD/SAM references.",
+    "Marginal paired t95 intervals have df=2, assume independent seed differences, and are not multiplicity adjusted.",
+    "No equivalence margin was specified; similar point estimates do not establish equivalence.",
+    "Lower input CE gradients do not guarantee prediction stability or adversarial robustness.",
+    "Sharpness is a parameterization-sensitive optimization lower-bound proxy; no causal mechanism conclusion."
+  ]
+}

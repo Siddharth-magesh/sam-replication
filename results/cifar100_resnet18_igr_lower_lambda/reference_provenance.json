@@ -1,0 +1,27 @@
+{
+  "source_study": "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf",
+  "sha256": {
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/manifest.json": "a25730ba6766c930f10391e7008ecbc85af9b151b2d60d3e60209e868cde1b6d",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/lambda_selection.json": "a629707a1146ff5cb8f733b9073570912720bf7bae46e85146de7d11c4de2dea",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/tune_lambda_0.0/train_result.json": "823591f6bf3f6ac080f5b2d9fc86d72d3ee630f6491ba16c9e047d68dc6089b4",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/final_SGD_seed0/metrics.json": "4dd1c5d96f06f7468f83fe503b75cf8872b9e6b8383b5597890f83b3733cb892",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/final_SGD_seed0/train_result.json": "5d183a67aca011f8b1dd3771142ef87575c5d1279013e7edf56e929ab490bca4",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/final_SGD_seed0/config.json": "98c5747a16ee3fdc1aafdb2c0fc41a1a74adc6f1626860b4101cb32b71343591",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/final_SAM_seed0/metrics.json": "46849194003586495003d47ae31876cbef102ea539d615818f630cadd608920f",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/final_SAM_seed0/train_result.json": "6e6d4d57aad028ed33ebdf35c32e36cedb4cd097b04d876ec38595b2d5002e05",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/final_SAM_seed0/config.json": "ade771ba93804ca675586d34b88b71887b6000466a7c10c85e208ced9d08657e",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/final_SGD_seed1/metrics.json": "53be3130d0b466ecfa2a1bfab7175cf9489c9e72c31c42893d3a1c47f3e33036",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/final_SGD_seed1/train_result.json": "f8f23aa930e6ac39b58a7bf1c598460db7b256fa6540f9a604886d1a44b92cc4",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/final_SGD_seed1/config.json": "879bdd6acb1528715653fccfc307f78d31f369928d4850acc5a5f44190de209f",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/final_SAM_seed1/metrics.json": "770dd8b67593668a5013472539f99a090c161102d9f171db0d544599c9d2cd95",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/final_SAM_seed1/train_result.json": "2c3742f453af9fc2e0177b084777cf7d4179c601fc1082ffe52f7e4d7a8fa0c5",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/final_SAM_seed1/config.json": "189be4127622e7810dbfa9cdd5314854fbdd4adc828cb27eb30028e363d1ac2c",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/final_SGD_seed2/metrics.json": "f46d5c4bea58857ea81ba3e1e1c521364fcad4e68f7add8847eefd20cb62317c",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/final_SGD_seed2/train_result.json": "6909de0b7e9929840e6082c40f4bf8aa4cb72214da9aeae994c0c443e499358f",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/final_SGD_seed2/config.json": "f69381a5ebecce2a800722b70cf8049150c73018071b39fd649dc2c3ddc05ec8",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/final_SAM_seed2/metrics.json": "8245bb9deb40b6114bb5e49f97224a2f4ef11a0f6793b9123d64d4971e49079a",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/final_SAM_seed2/train_result.json": "1044921cfe566fc6877beb3174f23604dff63d59f928b99cd12e7c1bf3b49773",
+    "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf/final_SAM_seed2/config.json": "8849e07c4a7576a33b1e6885f5e64da330a2635e5b8d7f4127e2eeb24422e803"
+  },
+  "note": "Completed reference SGD/SAM metrics reused; no reference checkpoint or test result modified. Prior test results have already been seen; new results are exploratory."
+}

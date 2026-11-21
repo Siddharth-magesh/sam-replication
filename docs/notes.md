@@ -1,3 +1,7 @@
+## Lower-lambda run completed (November 21)
+
+All six training jobs and three new final evaluations completed in 4.2993 incremental hours. Lambda 1e-5 selected. IGR accuracy 76.65%, SGD 76.4267%, SAM 77.0733%; IGR-SGD accuracy CI includes zero. Evidence ZIP downloaded with remote SHA-256/ZIP integrity verified, curated results in results/cifar100_resnet18_igr_lower_lambda. Checkpoints remain on persistent JS2 storage.
+
 ## Lower-lambda IGR exploratory extension prepared (November 20)
 
 Execution update November 20 Pacific: reviewed selection, unchanged numerical sources, configuration guards, reporting, checkpoints and budget handling; local dry-run passed. Pulled `b661914` on idle csci567-sam, verified original completed reference configurations and worker/runtime hashes, and launched in tmux `igr-lower-lambda`. Study `lower_lambda_runs/20261121_064811_a6db67`, durable launcher log `lower_lambda_launcher_20261121_064807.log` under `/workspace/sam_igr_a100_timing/`. Pinned A100 initialization passed. No numerical code or dependency changes; full completion and lower-grid outcomes **(to verify)**. New-work cap eight hours; prior accounting unchanged.

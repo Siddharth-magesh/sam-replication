@@ -1,0 +1,27 @@
+{
+  "extension": "cifar100_igr_lower_lambda_exploratory_v1",
+  "numerical_protocol": "cifar100_resnet18_sam_igr_full_v3_centered_bn",
+  "reference_study": "/workspace/sam_igr_a100_timing/full_runs/20261120_043937_4863bf",
+  "gpu": "NVIDIA A100-SXM4-40GB, 40960",
+  "root": "/workspace/sam_igr_a100_timing",
+  "prefix": "/workspace/sam_paper_replication/envs/sam",
+  "budget_hours": 8.0,
+  "grid": [
+    1e-05,
+    0.0001,
+    0.001
+  ],
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "sources": {
+    "run": "efddf4c20e34e8efc8145dbb517e59b1c143008a589e684edb930e84437e3a3d",
+    "core_run": "40605a120f3184b1cdbf394fea9320574f86c76a473a0b7551544e7317c60872",
+    "worker": "84d1d7fe912d82aaeab5cc6c79dbc89f28518ae7494b3e98896f559fb7cdaa5b",
+    "runtime": "04c82e4a60904fc6846f8cd2339a9a10dfc7290f8c2ae5c8face83a25d92d009",
+    "validation_worker": "d96caf2717736889989ae8d22bc03a9afae9f289abd05dd652aa929b2a52aa06",
+    "report": "a58baa1a91cd3bb4b41e2da383844dd1a81a79fd801da2149faf299ff5990997"
+  }
+}

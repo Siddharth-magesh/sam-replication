@@ -125,7 +125,7 @@ One full comparison (SAM, SGD-200, SGD-400) is roughly 12 to 16 A100-hours. The 
 | 19 | A100 one-epoch SGD/SAM/IGR timing before full experiment | Code lead | Nov 18 | Notebook 08 and experiments/cifar100_resnet18_a100_one_epoch_timing Python CLI prepared: 45k train / 5k validation, batch 128, one epoch per method after discarded warm-up, independent processes, real timing/optional checkpoint and budget projection only. Teammate supplied completed A100 timing (20261119_153717_b8692b): approximately 17.47/37.36/39.53 training seconds for SGD/SAM/IGR. Full-study projection approximately 15.02 h including tuning/reserve/allowance; not measured full-run time. |
 | 20 | Full CIFAR-100 ResNet-18 SGD/SAM/IGR study | Code lead | Nov 20 | Completed v3: all 12 training runs and 9 evaluations; SGD/SAM/IGR(0) mean accuracy 76.43/77.07/76.52%. Lambda zero selected; active-IGR mechanism comparison inconclusive. Curated results and report: results/cifar100_resnet18_sam_igr_100epoch/. |
 | 21 | Validation sensitivity of saved IGR tuning models | Code lead | Nov 20 | Complete on A100: attempt 20261120_230049_d80b2d, 76.71 seconds, three saved tuning checkpoints, same 1,000 validation images; integrity checks passed. Lambda 0/.01/.1 accuracy 76.7/57.1/57.7%, gradient L2 19.2810/12.3270/7.9026. Single-seed post-hoc diagnostic; evidence downloaded and verified. |
-| 22 | Lower-lambda active IGR exploratory extension | Code lead | Nov 20 | Running on A100 in tmux igr-lower-lambda, study 20261121_064811_a6db67. Fixed 1e-5/1e-4/1e-3 grid; three tuning and three final 100-epoch IGR runs, reused SGD/SAM references. Source/configuration and GPU initialization checks passed; completion/results (to verify). Eight-hour new-work cap. |
+| 22 | Lower-lambda active IGR exploratory extension | Code lead | Nov 20 | Running on A100 in tmux igr-lower-lambda, study 20261121_064811_a6db67. Fixed 1e-5/1e-4/1e-3 grid; three tuning and three final 100-epoch IGR runs, reused SGD/SAM references. Source/configuration and GPU initialization checks passed; Completed: all six training jobs and three new evaluations, 4.2993 hours. Selected lambda 1e-5; IGR 76.65% test accuracy. Verified evidence and report published. |
 
 Owners marked TBD should be filled in at the next meeting. Each task should have exactly one owner, even if several people help.
 
@@ -152,6 +152,8 @@ November 19 update to task 20: study 20261119_200309_788f36 failed during lambda
 The report is 4 pages excluding references and appendix, in a standard conference template. The appendix must contain extra plots, hyperparameters, failed attempts, a link to our code, a short statement of who did what, and a statement of how AI tools were used. We are allowed to use AI tools to understand the paper, debug code, and polish writing, but not to generate the analysis or conclusions, and every member must be able to explain the report if the TAs ask. To make the appendix statement easy, **each member should keep a running note of where they used AI help** (which task, which tool), added to the bottom of this file. Report failed runs and changed plans honestly, and do not adjust the experiment after seeing results to make it say something. Check-in and report-review milestones are not graded separately, but groups that skip them rarely do well, so everyone should come prepared.
 
 ## 12. Changelog
+
+- **2026-11-21**: Verified completed lower-lambda run, downloaded/checksummed evidence and published compact results; requested shelving after idle-GPU verification.
 
 - **2026-11-20**: Reviewed and launched the authorized lower-lambda extension on csci567-sam from repro b661914, with durable tmux log/exit status and separate study/checkpoints. Reference and GPU checks passed; full outcome (to verify).
 
@@ -205,7 +207,7 @@ The report is 4 pages excluding references and appendix, in a standard conferenc
 
 - **2026-11-17**: Verified TF_CUDNN_DETERMINISTIC support in exact jaxlib 0.1.57 XLA source; added explicit recorded option for both methods. Original-reference repeatability failure remains inconclusive; runtime resolution (to verify). No reinstall, tolerance relaxation or GPU execution.
 
-- **2026-11-17**: Diagnosed the supplied later UTC Jetstream failure as a missing optimizer device axis in the pmap reference; fixed it and learning-rate comparison shape. Added single-job preflight→SAM→SGD execution, persistent-environment reuse instructions, early missing-input checks, latest-log pointer and explicit one-time L4 accounting. Local non-GPU regression/control-flow checks passed; corrected A100 preflight (to verify).
+- **2026-11-17**: Diagnosed the supplied later UTC Jetstream failure as a missing optimizer device axis in the pmap reference; fixed it and learning-rate comparison shape. Added single-job preflightâ†’SAMâ†’SGD execution, persistent-environment reuse instructions, early missing-input checks, latest-log pointer and explicit one-time L4 accounting. Local non-GPU regression/control-flow checks passed; corrected A100 preflight (to verify).
 
 - **2026-11-17**: Recorded user-reported L4 SGD/SAM ten-batch functional success (0.3210852531 hours). Reworked the Jetstream runbook entry sequence with explicit WSL/instance commands, new/existing clone paths, repro switch/pull, preflight, staged training and shelving verification. A100 preflight and cumulative-ledger reconciliation remain (to verify). Documentation only; no remote execution.
 
@@ -234,6 +236,8 @@ The report is 4 pages excluding references and appendix, in a standard conferenc
 - **2026-10-20**: Tracker created. Environment working on Colab T4, SAM and SGD smoke tests passed, code findings documented, shared notebook prepared. A100 setup and first real reproduction not yet started.
 
 ## 13. AI-usage log (for the appendix statement)
+
+- **2026-11-21**: Codex inspected completion, verified archive and six training/three evaluation records, recomputed descriptive statistics, documented exploratory limitations and preserved results before requested shelving.
 
 - **2026-11-20**: Codex reviewed the lower-lambda orchestration/reporting and unchanged v3 numerical code, checked the dry-run and remote references, pulled repro and started the user-authorized training in tmux. No new scientific conclusions or numerical implementation changes.
 

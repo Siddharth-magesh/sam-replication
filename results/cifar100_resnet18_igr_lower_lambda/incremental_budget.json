@@ -1,0 +1,12 @@
+{
+  "charged_hours": 4.299322758820834,
+  "invocations": [
+    {
+      "id": "2bf753e2786448e2ace0f6c3b179700b",
+      "status": "complete",
+      "reserved_hours": 8.0,
+      "started_utc": "2026-11-21T06:48:11.610912+00:00",
+      "elapsed_hours": 4.299322758820834
+    }
+  ]
+}

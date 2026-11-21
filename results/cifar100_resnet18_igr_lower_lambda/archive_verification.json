@@ -1,0 +1,8 @@
+{
+  "sha256": "75f3f577a6a48b6a7f26cd79c16281239de618e63609737a596d038518eae540",
+  "archive": "experimental_results\\js2_igr_lower_lambda\\20261121_064811_a6db67_evidence.zip",
+  "zip_integrity": "passed",
+  "completed_training_jobs": 6,
+  "completed_new_evaluations": 3,
+  "reused_evaluations": 6
+}
