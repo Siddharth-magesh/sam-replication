@@ -26,6 +26,16 @@ This extension is not an independent confirmatory experiment: its design follows
 
 ## Prepare and run inside the A100 machine
 
+Launched November 20 Pacific time (November 21 UTC) from `repro` commit `b661914`, in tmux `igr-lower-lambda`. Study: `/workspace/sam_igr_a100_timing/lower_lambda_runs/20261121_064811_a6db67`. Reference/source/configuration checks and pinned GPU initialization passed; full completion remains **(to verify)**. Do not launch a duplicate. Monitor on the instance:
+
+```bash
+tail -n 20 -F /workspace/sam_igr_a100_timing/lower_lambda_launcher_20261121_064807.log
+# Alternatively:
+tmux attach -t igr-lower-lambda
+```
+
+The timestamped launcher log persists after tmux exits; its sibling `.exit_code` records the final exit status. Each worker also keeps its own log and checkpoints. The instance remains active and is not automatically shelved.
+
 Publish these changes, then on the prepared course machine:
 
 ```bash
