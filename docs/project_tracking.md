@@ -125,6 +125,7 @@ One full comparison (SAM, SGD-200, SGD-400) is roughly 12 to 16 A100-hours. The 
 | 19 | A100 one-epoch SGD/SAM/IGR timing before full experiment | Code lead | Nov 18 | Notebook 08 and experiments/cifar100_resnet18_a100_one_epoch_timing Python CLI prepared: 45k train / 5k validation, batch 128, one epoch per method after discarded warm-up, independent processes, real timing/optional checkpoint and budget projection only. Teammate supplied completed A100 timing (20261119_153717_b8692b): approximately 17.47/37.36/39.53 training seconds for SGD/SAM/IGR. Full-study projection approximately 15.02 h including tuning/reserve/allowance; not measured full-run time. |
 | 20 | Full CIFAR-100 ResNet-18 SGD/SAM/IGR study | Code lead | Nov 20 | Completed v3: all 12 training runs and 9 evaluations; SGD/SAM/IGR(0) mean accuracy 76.43/77.07/76.52%. Lambda zero selected; active-IGR mechanism comparison inconclusive. Curated results and report: results/cifar100_resnet18_sam_igr_100epoch/. |
 | 21 | Validation sensitivity of saved IGR tuning models | Code lead | Nov 20 | Complete on A100: attempt 20261120_230049_d80b2d, 76.71 seconds, three saved tuning checkpoints, same 1,000 validation images; integrity checks passed. Lambda 0/.01/.1 accuracy 76.7/57.1/57.7%, gradient L2 19.2810/12.3270/7.9026. Single-seed post-hoc diagnostic; evidence downloaded and verified. |
+| 22 | Lower-lambda active IGR exploratory extension | Code lead | Nov 20 | Prepared fixed 1e-5/1e-4/1e-3 grid, 100-epoch development trials and three fresh final IGR seeds; positive-only validation selection explicitly compared with zero, v3 numerical source retained, SGD/SAM references reused. Separate budget/resume/evidence; local checks passed, GPU execution pending. |
 
 Owners marked TBD should be filled in at the next meeting. Each task should have exactly one owner, even if several people help.
 
@@ -151,6 +152,8 @@ November 19 update to task 20: study 20261119_200309_788f36 failed during lambda
 The report is 4 pages excluding references and appendix, in a standard conference template. The appendix must contain extra plots, hyperparameters, failed attempts, a link to our code, a short statement of who did what, and a statement of how AI tools were used. We are allowed to use AI tools to understand the paper, debug code, and polish writing, but not to generate the analysis or conclusions, and every member must be able to explain the report if the TAs ask. To make the appendix statement easy, **each member should keep a running note of where they used AI help** (which task, which tool), added to the bottom of this file. Report failed runs and changed plans honestly, and do not adjust the experiment after seeing results to make it say something. Check-in and report-review milestones are not graded separately, but groups that skip them rarely do well, so everyone should come prepared.
 
 ## 12. Changelog
+
+- **2026-11-20**: Prepared the user-authorized lower-lambda IGR extension with fixed positive-only selection, existing v3 references/source guards, separate incremental budget, checkpoint recovery and descriptive reports. Previous numerical code/results unchanged; no GPU launch.
 
 - **2026-11-20**: Ran the authorized validation-only probe in JS2 tmux after remote pull; all three models passed. Preserved logs, downloaded/checksummed ZIP and compact results, documented reduced sensitivity with lower accuracy. No training/code changes; cumulative study time 7.430089 h.
 
@@ -229,6 +232,8 @@ The report is 4 pages excluding references and appendix, in a standard conferenc
 - **2026-10-20**: Tracker created. Environment working on Colab T4, SAM and SGD smoke tests passed, code findings documented, shared notebook prepared. A100 setup and first real reproduction not yet started.
 
 ## 13. AI-usage log (for the appendix statement)
+
+- **2026-11-20**: Codex implemented the requested exploratory follow-up and locally checked selection, source/provenance compatibility, frozen-reference handling, standalone resume assembly and mixed-origin summary arithmetic. No GPU run, new measurements or hypothesis verdict generated.
 
 - **2026-11-20**: Codex reviewed validation data/gradient/checkpoint handling, checked syntax and remote readiness, executed the user-authorized bounded A100 validation in tmux, verified evidence and recorded descriptive results and single-seed limitations. No retraining, test evaluation or hyperparameter re-selection.
 

@@ -1,5 +1,7 @@
 ## Current run instructions
 
+[Exploratory lower-lambda IGR follow-up](experiments/cifar100_resnet18_igr_lower_lambda/instructions.md): fixed smaller-positive grid, three final IGR seeds and reused v3 SGD/SAM references. Prepared locally; no new training launched.
+
 [Full A100 SGD/SAM/IGR study](experiments/cifar100_resnet18_sam_igr_full/instructions.md) | [A100 one-epoch SGD/SAM/IGR timing (Python/tmux)](experiments/cifar100_resnet18_a100_one_epoch_timing/instructions.md) | [Completed CIFAR-10 results](docs/results/js2_50epoch_results_analysis.md) | [Documentation index](docs/README.md)
 
 # SAM replication and input-gradient regularization experiments
